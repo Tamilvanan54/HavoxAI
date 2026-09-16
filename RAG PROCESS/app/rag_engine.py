@@ -241,9 +241,8 @@ class RAGEngine:
             results = []
             seen_contents = set()
 
-            # Normalize user student dept/year if role is student or dept/yr supplied
-            user_dept = (department or "").strip().upper() if (role == "student" or department) else None
-            user_yr = (year or "").strip().lower() if (role == "student" or year) else None
+            user_dept = re.sub(r'[^a-zA-Z0-9]', '', (department or "").upper()) if (role == "student" or department) else None
+            user_yr = re.sub(r'[^a-zA-Z0-9]', '', (year or "").lower()) if (role == "student" or year) else None
 
             def is_doc_allowed_for_student(doc) -> bool:
                 if not (user_dept or user_yr):
@@ -256,9 +255,12 @@ class RAGEngine:
                     doc_dept = parts[0].upper()
                     doc_year = parts[1].lower()
 
-                if user_dept and doc_dept != "ALL" and doc_dept != user_dept:
+                doc_dept_clean = re.sub(r'[^a-zA-Z0-9]', '', doc_dept.upper())
+                doc_yr_clean = re.sub(r'[^a-zA-Z0-9]', '', doc_year.lower())
+
+                if user_dept and doc_dept_clean not in ["ALL", ""] and doc_dept_clean != user_dept:
                     return False
-                if user_yr and doc_year != "ALL" and doc_year != user_yr:
+                if user_yr and doc_yr_clean not in ["all", ""] and doc_yr_clean != user_yr:
                     return False
                 return True
 

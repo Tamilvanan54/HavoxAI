@@ -664,17 +664,19 @@ def get_pdfs(
 
         # Filtering logic for Students: match department & year or ALL
         if role == "student" or (department and year):
-            user_dept = (department or "").strip().upper()
-            user_yr = (year or "").strip().lower()
+            import re
+            user_dept = re.sub(r'[^a-zA-Z0-9]', '', (department or "").upper())
+            user_yr = re.sub(r'[^a-zA-Z0-9]', '', (year or "").lower())
 
-            doc_dept_upper = (doc_dept or "").strip().upper()
-            doc_yr_lower = (doc_year or "").strip().lower()
+            doc_dept_clean = re.sub(r'[^a-zA-Z0-9]', '', (doc_dept or "").upper())
+            doc_yr_clean = re.sub(r'[^a-zA-Z0-9]', '', (doc_year or "").lower())
 
             # Skip ONLY if document has a specific department/year assigned that does NOT match student's department/year
-            if user_dept and doc_dept_upper not in ["ALL", ""] and doc_dept_upper != user_dept:
+            if user_dept and doc_dept_clean not in ["ALL", ""] and doc_dept_clean != user_dept:
                 continue
-            if user_yr and doc_yr_lower not in ["all", ""] and doc_yr_lower != user_yr:
-                continue
+            if user_yr and doc_yr_clean not in ["ALL", "3RDYEAR", ""] and doc_yr_clean != user_yr:
+                if doc_yr_clean not in ["ALL", ""]:
+                    continue
 
         structured_files.append({
             "filename": fname,
