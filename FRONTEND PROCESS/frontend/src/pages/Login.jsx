@@ -1,0 +1,314 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { API_BASE_URL } from "../config/api";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
+export default function Login() {
+
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleLogin = async () => {
+
+    setError("");
+
+    if (!email || !password) {
+      setError("Enter Email and Password");
+      return;
+    }
+
+    try {
+
+      setLoading(true);
+
+      const response = await axios.post(
+        `${API_BASE_URL}/login`,
+        null,
+        {
+          params: {
+            email,
+            password,
+          },
+        }
+      );
+
+      if (response.data.status === true) {
+
+        localStorage.setItem(
+          "token",
+          response.data.token
+        );
+
+        localStorage.setItem(
+          "role",
+          response.data.role
+        );
+
+        localStorage.setItem(
+          "email",
+          email
+        );
+
+        if (response.data.name) {
+          localStorage.setItem("name", response.data.name);
+        } else {
+          localStorage.setItem("name", email.split("@")[0]);
+        }
+
+        if (response.data.department) {
+          localStorage.setItem("department", response.data.department);
+        }
+        if (response.data.year) {
+          localStorage.setItem("year", response.data.year);
+        }
+        if (response.data.college) {
+          localStorage.setItem("college", response.data.college);
+        }
+
+        localStorage.removeItem("activeChatId");
+
+        navigate("/chat");
+
+      } else {
+
+        setError(
+          response.data.message
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "LOGIN ERROR:",
+        error
+      );
+
+      if (
+        error.response &&
+        error.response.data
+      ) {
+
+        setError(
+          error.response.data.message ||
+          "Login Failed"
+        );
+
+      } else {
+
+        setError(
+          "Server Not Responding"
+        );
+
+      }
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
+
+  return (
+
+    <div
+      style={{
+        width: "100vw",
+        height: "100vh",
+        background: "#0d0d0d",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        color: "white",
+        overflow: "hidden"
+      }}
+    >
+
+      <div
+        style={{
+          width: "420px",
+          padding: "40px",
+          borderRadius: "20px",
+          background: "#171717",
+          border: "1px solid #2f2f2f",
+          boxShadow:
+            "0px 0px 30px rgba(0,0,0,0.6)"
+        }}
+      >
+
+        {/* LOGO */}
+
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: "30px"
+          }}
+        >
+          <img
+            src="/havox-full-logo.png"
+            alt="HavoxAI Logo"
+            style={{
+              width: "auto",
+              maxWidth: "100%",
+              height: "100px",
+              objectFit: "contain",
+              display: "block",
+              margin: "0 auto"
+            }}
+          />
+        </div>
+
+        {error && (
+          <div
+            style={{
+              background: "#7f1d1d",
+              color: "#fecaca",
+              padding: "12px",
+              borderRadius: "10px",
+              marginBottom: "15px",
+              textAlign: "center"
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) =>
+            setEmail(e.target.value)
+          }
+          style={{
+            width: "100%",
+            padding: "14px",
+            marginBottom: "15px",
+            background: "#262626",
+            color: "white",
+            border: "1px solid #404040",
+            borderRadius: "10px",
+            outline: "none",
+            boxSizing: "border-box"
+          }}
+        />
+
+        <div style={{ position: "relative", width: "100%", marginTop: "15px" }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={(e) =>
+              setPassword(
+                e.target.value
+              )
+            }
+            style={{
+              width: "100%",
+              padding: "14px 45px 14px 14px",
+              background: "#262626",
+              color: "white",
+              border: "1px solid #404040",
+              borderRadius: "10px",
+              outline: "none",
+              boxSizing: "border-box"
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: "absolute",
+              right: "14px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              background: "transparent",
+              border: "none",
+              color: "#9ca3af",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "0",
+              fontSize: "18px"
+            }}
+            title={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </button>
+        </div>
+
+        <div
+          style={{
+            textAlign: "right",
+            marginTop: "10px"
+          }}
+        >
+          <span
+            onClick={() =>
+              navigate(
+                "/forgot-password"
+              )
+            }
+            style={{
+              color: "#9ca3af",
+              cursor: "pointer",
+              fontSize: "14px"
+            }}
+          >
+            Forgot Password?
+          </span>
+        </div>
+
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          style={{
+            width: "100%",
+            marginTop: "20px",
+            padding: "14px",
+            borderRadius: "30px",
+            border: "none",
+            background: "white",
+            color: "black",
+            fontWeight: "600",
+            fontSize: "16px",
+            cursor: "pointer"
+          }}
+        >
+          {
+            loading
+              ? "Signing In..."
+              : "Continue"
+          }
+        </button>
+
+        <button
+          onClick={() =>
+            navigate("/select-role")
+          }
+          style={{
+            width: "100%",
+            marginTop: "12px",
+            padding: "14px",
+            borderRadius: "30px",
+            background: "transparent",
+            border: "1px solid #404040",
+            color: "white",
+            cursor: "pointer"
+          }}
+        >
+          New User (Create Account)
+        </button>
+
+      </div>
+
+    </div>
+  );
+}
