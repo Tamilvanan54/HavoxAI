@@ -674,9 +674,8 @@ def get_pdfs(
             # Skip ONLY if document has a specific department/year assigned that does NOT match student's department/year
             if user_dept and doc_dept_clean not in ["ALL", ""] and doc_dept_clean != user_dept:
                 continue
-            if user_yr and doc_yr_clean not in ["ALL", "3RDYEAR", ""] and doc_yr_clean != user_yr:
-                if doc_yr_clean not in ["ALL", ""]:
-                    continue
+            if user_yr and doc_yr_clean not in ["ALL", ""] and doc_yr_clean != user_yr:
+                continue
 
         structured_files.append({
             "filename": fname,
