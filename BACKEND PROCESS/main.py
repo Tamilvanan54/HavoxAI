@@ -667,10 +667,13 @@ def get_pdfs(
             user_dept = (department or "").strip().upper()
             user_yr = (year or "").strip().lower()
 
-            # Skip if document belongs to a different department/year
-            if user_dept and doc_dept != "ALL" and doc_dept.upper() != user_dept:
+            doc_dept_upper = (doc_dept or "").strip().upper()
+            doc_yr_lower = (doc_year or "").strip().lower()
+
+            # Skip ONLY if document has a specific department/year assigned that does NOT match student's department/year
+            if user_dept and doc_dept_upper not in ["ALL", ""] and doc_dept_upper != user_dept:
                 continue
-            if user_yr and doc_year != "ALL" and doc_year.lower() != user_yr:
+            if user_yr and doc_yr_lower not in ["all", ""] and doc_yr_lower != user_yr:
                 continue
 
         structured_files.append({
