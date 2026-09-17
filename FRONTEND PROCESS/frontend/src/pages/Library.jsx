@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
+import { ENGINEERING_DEPARTMENTS } from "../data/collegesAndDepartments";
 
 export default function Library() {
   const role = (localStorage.getItem("role") || "").toLowerCase().trim();
@@ -16,8 +17,6 @@ export default function Library() {
   const [uploading, setUploading] = useState(false);
   const [uploadDept, setUploadDept] = useState("CSE");
   const [uploadYear, setUploadYear] = useState("3rd Year");
-  const [selectedDept, setSelectedDept] = useState("ALL");
-  const [selectedYear, setSelectedYear] = useState("ALL");
 
   useEffect(() => {
     const email = localStorage.getItem("email");
@@ -41,7 +40,7 @@ export default function Library() {
 
   useEffect(() => {
     fetchPDFs();
-  }, [selectedDept, selectedYear, userDept, userYr]);
+  }, [userDept, userYr]);
 
   const fetchPDFs = async () => {
     try {
@@ -50,9 +49,6 @@ export default function Library() {
         params.department = userDept;
         params.year = userYr;
         params.role = "student";
-      } else {
-        if (selectedDept !== "ALL") params.department = selectedDept;
-        if (selectedYear !== "ALL") params.year = selectedYear;
       }
 
       const response = await axios.get(`${API_BASE_URL}/pdfs`, { params });
@@ -136,51 +132,6 @@ export default function Library() {
             </p>
           )}
         </div>
-
-        {/* STAFF/ADMIN DEPT & YEAR FILTER BAR */}
-        {isStaffOrAdmin && (
-          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-            <select
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              style={{
-                padding: "8px 12px",
-                background: "#2f2f2f",
-                color: "white",
-                border: "1px solid #404040",
-                borderRadius: "8px"
-              }}
-            >
-              <option value="ALL">All Departments</option>
-              <option value="CSE">CSE</option>
-              <option value="ECE">ECE</option>
-              <option value="EEE">EEE</option>
-              <option value="MECH">MECH</option>
-              <option value="IT">IT</option>
-              <option value="CIVIL">CIVIL</option>
-              <option value="AIDS">AIDS</option>
-              <option value="AIML">AIML</option>
-            </select>
-
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              style={{
-                padding: "8px 12px",
-                background: "#2f2f2f",
-                color: "white",
-                border: "1px solid #404040",
-                borderRadius: "8px"
-              }}
-            >
-              <option value="ALL">All Years</option>
-              <option value="1st Year">1st Year</option>
-              <option value="2nd Year">2nd Year</option>
-              <option value="3rd Year">3rd Year</option>
-              <option value="4th Year">4th Year</option>
-            </select>
-          </div>
-        )}
       </div>
 
       {/* STAFF / ADMIN UPLOAD SECTION */}
@@ -211,17 +162,15 @@ export default function Library() {
                   background: "#171717",
                   color: "white",
                   border: "1px solid #404040",
-                  borderRadius: "8px"
+                  borderRadius: "8px",
+                  fontSize: "13px"
                 }}
               >
-                <option value="CSE">CSE</option>
-                <option value="ECE">ECE</option>
-                <option value="EEE">EEE</option>
-                <option value="MECH">MECH</option>
-                <option value="IT">IT</option>
-                <option value="CIVIL">CIVIL</option>
-                <option value="AIDS">AIDS</option>
-                <option value="AIML">AIML</option>
+                {ENGINEERING_DEPARTMENTS.map((dept) => (
+                  <option key={dept.code} value={dept.code}>
+                    {dept.name}
+                  </option>
+                ))}
               </select>
             </div>
 
