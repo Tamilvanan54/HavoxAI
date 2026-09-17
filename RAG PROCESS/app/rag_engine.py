@@ -247,18 +247,33 @@ class RAGEngine:
             user_dept = re.sub(r'[^a-zA-Z0-9]', '', (department or "").upper()) if (role == "student" or department) else None
             user_yr = re.sub(r'[^a-zA-Z0-9]', '', (year or "").lower()) if (role == "student" or year) else None
 
+            print(f"🔍 [RAG Retrieval] student_mode={student_mode} | user_dept='{user_dept}' | user_yr='{user_yr}' | role='{role}'")
+
             def is_doc_allowed_for_student(doc) -> bool:
                 # Non-student (staff/admin): allow all docs, no filtering
                 if not student_mode:
                     return True
 
-                doc_source = doc.metadata.get("source", "")
-                parts = doc_source.split("_")
+                raw_source = doc.metadata.get("source", "")
+                doc_filename = os.path.basename(str(raw_source).replace("\\", "/"))
+
+                known_depts = ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML"]
                 doc_dept = "ALL"
                 doc_year = "ALL"
-                if len(parts) >= 3 and parts[0].upper() in ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML"]:
-                    doc_dept = parts[0].upper()
-                    doc_year = parts[1].lower()
+
+                parts = doc_filename.split("_")
+                if len(parts) >= 2:
+                    for d in known_depts:
+                        if parts[0].upper() == d or parts[0].upper().startswith(d):
+                            doc_dept = d
+                            break
+                    if len(parts) >= 3:
+                        doc_year = parts[1]
+                else:
+                    for d in known_depts:
+                        if re.search(r'\b' + d + r'\b', doc_filename.upper()):
+                            doc_dept = d
+                            break
 
                 doc_dept_clean = re.sub(r'[^a-zA-Z0-9]', '', doc_dept.upper())
                 doc_yr_clean = re.sub(r'[^a-zA-Z0-9]', '', doc_year.lower())
@@ -266,14 +281,17 @@ class RAGEngine:
                 # If student has a specific dept: doc must match that dept or be "ALL"
                 if user_dept:
                     if doc_dept_clean not in ["ALL", ""] and doc_dept_clean != user_dept:
+                        print(f"🚫 [RAG Filter] Blocking doc '{doc_filename}' (dept: {doc_dept_clean}) for student (dept: {user_dept})")
                         return False
                 else:
                     # Student has no dept set → only allow "ALL" category docs (no dept-specific docs)
                     if doc_dept_clean not in ["ALL", ""]:
+                        print(f"🚫 [RAG Filter] Blocking dept-specific doc '{doc_filename}' for student with no dept")
                         return False
 
                 # Year filter
                 if user_yr and doc_yr_clean not in ["all", ""] and doc_yr_clean != user_yr:
+                    print(f"🚫 [RAG Filter] Blocking doc '{doc_filename}' (year: {doc_yr_clean}) for student (year: {user_yr})")
                     return False
                 return True
 
