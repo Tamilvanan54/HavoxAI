@@ -241,12 +241,17 @@ class RAGEngine:
             results = []
             seen_contents = set()
 
+            # student_mode: True if this is a student request (apply dept/year filtering)
+            student_mode = (role == "student") if role else bool(department or year)
+
             user_dept = re.sub(r'[^a-zA-Z0-9]', '', (department or "").upper()) if (role == "student" or department) else None
             user_yr = re.sub(r'[^a-zA-Z0-9]', '', (year or "").lower()) if (role == "student" or year) else None
 
             def is_doc_allowed_for_student(doc) -> bool:
-                if not (user_dept or user_yr):
+                # Non-student (staff/admin): allow all docs, no filtering
+                if not student_mode:
                     return True
+
                 doc_source = doc.metadata.get("source", "")
                 parts = doc_source.split("_")
                 doc_dept = "ALL"
@@ -258,8 +263,16 @@ class RAGEngine:
                 doc_dept_clean = re.sub(r'[^a-zA-Z0-9]', '', doc_dept.upper())
                 doc_yr_clean = re.sub(r'[^a-zA-Z0-9]', '', doc_year.lower())
 
-                if user_dept and doc_dept_clean not in ["ALL", ""] and doc_dept_clean != user_dept:
-                    return False
+                # If student has a specific dept: doc must match that dept or be "ALL"
+                if user_dept:
+                    if doc_dept_clean not in ["ALL", ""] and doc_dept_clean != user_dept:
+                        return False
+                else:
+                    # Student has no dept set → only allow "ALL" category docs (no dept-specific docs)
+                    if doc_dept_clean not in ["ALL", ""]:
+                        return False
+
+                # Year filter
                 if user_yr and doc_yr_clean not in ["all", ""] and doc_yr_clean != user_yr:
                     return False
                 return True

@@ -35,13 +35,19 @@ export default function Chat() {
   } = useChatHistory();
 
   useEffect(() => {
-    const savedName = localStorage.getItem("name");
     const email = localStorage.getItem("email");
-    if (!savedName && email) {
+    const savedName = localStorage.getItem("name");
+    const savedDept = localStorage.getItem("department");
+    const savedYear = localStorage.getItem("year");
+    if (email && (!savedName || !savedDept || !savedYear)) {
       axios.get(`${API_BASE_URL}/profile`, { params: { email } })
         .then((res) => {
-          if (res.data && res.data.name) {
-            localStorage.setItem("name", res.data.name);
+          if (res.data) {
+            if (res.data.name) localStorage.setItem("name", res.data.name);
+            if (res.data.department) localStorage.setItem("department", res.data.department);
+            if (res.data.year) localStorage.setItem("year", res.data.year);
+            if (res.data.role) localStorage.setItem("role", res.data.role);
+            if (res.data.college) localStorage.setItem("college", res.data.college);
           }
         })
         .catch(() => {});
