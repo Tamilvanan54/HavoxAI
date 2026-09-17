@@ -248,6 +248,7 @@ export default function Chat() {
           query: currentMessage,
           history: recentHistory,
           model_name: (model === "Llama" || model === "Llama 3.2") ? "llama3.2:1b" : "qwen2.5:1.5b",
+          college: localStorage.getItem("college") || "",
           department: localStorage.getItem("department") || "",
           year: localStorage.getItem("year") || "",
           role: (localStorage.getItem("role") || "").toLowerCase().trim()

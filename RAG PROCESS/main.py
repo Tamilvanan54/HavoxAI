@@ -280,12 +280,16 @@ class QueryRequest(BaseModel):
     query: str = Field(..., examples=["What is Machine Learning?"])
     model_name: str | None = Field(default="qwen2.5:1.5b")
     history: Any | None = None
+    college: str | None = None
     department: str | None = None
     year: str | None = None
     role: str | None = None
 
 class IngestRequest(BaseModel):
     filename: str | None = None
+    college: str | None = None
+    department: str | None = None
+    year: str | None = None
 
 class DeleteDocRequest(BaseModel):
     filename: str
@@ -400,6 +404,7 @@ def handle_query(request: QueryRequest):
     events = list(engine.query_stream_sse(
         request.query,
         history=request.history,
+        college=request.college,
         department=request.department,
         year=request.year,
         role=request.role
@@ -429,7 +434,7 @@ def handle_query(request: QueryRequest):
 def handle_query_stream(request: QueryRequest):
     """SSE streaming endpoint returning status, meta, tokens, and final response metadata."""
     global engine
-    print(f"📥 [RAG Stream] Query: '{request.query[:40]}' | Dept: '{request.department}' | Year: '{request.year}' | Role: '{request.role}'")
+    print(f"📥 [RAG Stream] Query: '{request.query[:35]}' | Clg: '{request.college}' | Dept: '{request.department}' | Year: '{request.year}' | Role: '{request.role}'")
     if not engine:
         print("⚡ Creating instant lightweight RAG engine for stream request...")
         engine = RAGEngine(vectorstore=None, model_name=os.getenv("RAG_MODEL_NAME", "qwen2.5:1.5b"))
@@ -441,6 +446,7 @@ def handle_query_stream(request: QueryRequest):
         engine.query_stream_sse(
             request.query,
             history=request.history,
+            college=request.college,
             department=request.department,
             year=request.year,
             role=request.role

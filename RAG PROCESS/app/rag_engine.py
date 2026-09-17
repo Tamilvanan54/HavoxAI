@@ -200,6 +200,7 @@ class RAGEngine:
         self,
         query: str,
         k: int = 4,
+        college: str | None = None,
         department: str | None = None,
         year: str | None = None,
         role: str | None = None
@@ -241,13 +242,35 @@ class RAGEngine:
             results = []
             seen_contents = set()
 
-            # student_mode: True if this is a student request (apply dept/year filtering)
-            student_mode = (role == "student") if role else bool(department or year)
+            # student_mode: True if this is a student request (apply college/dept/year filtering)
+            student_mode = (role == "student") if role else bool(college or department or year)
 
+            user_clg = re.sub(r'[^a-zA-Z0-9]', '', (college or "").upper()) if (role == "student" or college) else None
             user_dept = re.sub(r'[^a-zA-Z0-9]', '', (department or "").upper()) if (role == "student" or department) else None
             user_yr = re.sub(r'[^a-zA-Z0-9]', '', (year or "").lower()) if (role == "student" or year) else None
 
-            print(f"🔍 [RAG Retrieval] student_mode={student_mode} | user_dept='{user_dept}' | user_yr='{user_yr}' | role='{role}'")
+            print(f"🔍 [RAG Retrieval] student_mode={student_mode} | user_clg='{user_clg}' | user_dept='{user_dept}' | user_yr='{user_yr}' | role='{role}'")
+
+            # Fetch DB metadata map for uploaded PDFs if accessible
+            db_doc_info = {}
+            try:
+                import sys
+                backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "BACKEND PROCESS"))
+                if backend_dir not in sys.path:
+                    sys.path.insert(0, backend_dir)
+                from database.connection import SessionLocal
+                from database.models import PDFDocument
+                _db = SessionLocal()
+                _docs = _db.query(PDFDocument).all()
+                for _d in _docs:
+                    db_doc_info[_d.filename] = {
+                        "college": getattr(_d, "college", "ALL") or "ALL",
+                        "department": _d.department or "ALL",
+                        "year": _d.year or "ALL"
+                    }
+                _db.close()
+            except Exception:
+                pass
 
             def is_doc_allowed_for_student(doc) -> bool:
                 # Non-student (staff/admin): allow all docs, no filtering
@@ -257,39 +280,49 @@ class RAGEngine:
                 raw_source = doc.metadata.get("source", "")
                 doc_filename = os.path.basename(str(raw_source).replace("\\", "/"))
 
-                known_depts = ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML"]
-                doc_dept = "ALL"
-                doc_year = "ALL"
+                doc_clg = doc.metadata.get("college", "ALL")
+                doc_dept = doc.metadata.get("department", "ALL")
+                doc_year = doc.metadata.get("year", "ALL")
 
+                # Check database record
+                if doc_filename in db_doc_info:
+                    info = db_doc_info[doc_filename]
+                    doc_clg = info.get("college") or doc_clg
+                    doc_dept = info.get("department") or doc_dept
+                    doc_year = info.get("year") or doc_year
+
+                # Check filename pattern as fallback
+                known_depts = ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML", "CSBS", "CYBER", "BME", "BIOTECH", "ROBOTICS", "MECHATRONICS", "AUTO", "CHEM", "AGRI", "AERO"]
                 parts = doc_filename.split("_")
                 if len(parts) >= 2:
                     for d in known_depts:
                         if parts[0].upper() == d or parts[0].upper().startswith(d):
                             doc_dept = d
                             break
-                    if len(parts) >= 3:
+                    if len(parts) >= 3 and doc_year in ["ALL", ""]:
                         doc_year = parts[1]
-                else:
-                    for d in known_depts:
-                        if re.search(r'\b' + d + r'\b', doc_filename.upper()):
-                            doc_dept = d
-                            break
 
-                doc_dept_clean = re.sub(r'[^a-zA-Z0-9]', '', doc_dept.upper())
-                doc_yr_clean = re.sub(r'[^a-zA-Z0-9]', '', doc_year.lower())
+                doc_clg_clean = re.sub(r'[^a-zA-Z0-9]', '', str(doc_clg).upper())
+                doc_dept_clean = re.sub(r'[^a-zA-Z0-9]', '', str(doc_dept).upper())
+                doc_yr_clean = re.sub(r'[^a-zA-Z0-9]', '', str(doc_year).lower())
 
-                # If student has a specific dept: doc must match that dept or be "ALL"
+                # 1. College filter
+                if user_clg:
+                    if doc_clg_clean not in ["ALL", ""] and doc_clg_clean != user_clg:
+                        print(f"🚫 [RAG Filter] Blocking doc '{doc_filename}' (college: {doc_clg_clean}) for student (college: {user_clg})")
+                        return False
+
+                # 2. Department filter
                 if user_dept:
                     if doc_dept_clean not in ["ALL", ""] and doc_dept_clean != user_dept:
                         print(f"🚫 [RAG Filter] Blocking doc '{doc_filename}' (dept: {doc_dept_clean}) for student (dept: {user_dept})")
                         return False
                 else:
-                    # Student has no dept set → only allow "ALL" category docs (no dept-specific docs)
                     if doc_dept_clean not in ["ALL", ""]:
                         print(f"🚫 [RAG Filter] Blocking dept-specific doc '{doc_filename}' for student with no dept")
                         return False
 
-                # Year filter
+                # 3. Year filter
                 if user_yr and doc_yr_clean not in ["all", ""] and doc_yr_clean != user_yr:
                     print(f"🚫 [RAG Filter] Blocking doc '{doc_filename}' (year: {doc_yr_clean}) for student (year: {user_yr})")
                     return False
@@ -605,6 +638,7 @@ Answer:"""
         self,
         query_text: str,
         history: str | list | None = None,
+        college: str | None = None,
         department: str | None = None,
         year: str | None = None,
         role: str | None = None
@@ -668,6 +702,7 @@ Answer:"""
         context_text, docs, sources_metadata = self._get_context_and_docs(
             search_query,
             k=k_value,
+            college=college,
             department=department,
             year=year,
             role=role

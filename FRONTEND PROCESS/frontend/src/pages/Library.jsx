@@ -18,12 +18,18 @@ export default function Library() {
   const [uploadDept, setUploadDept] = useState("CSE");
   const [uploadYear, setUploadYear] = useState("3rd Year");
 
+  const [userClg, setUserClg] = useState(localStorage.getItem("college") || "");
+
   useEffect(() => {
     const email = localStorage.getItem("email");
-    if (email && (!localStorage.getItem("department") || !localStorage.getItem("year"))) {
+    if (email && (!localStorage.getItem("department") || !localStorage.getItem("year") || !localStorage.getItem("college"))) {
       axios.get(`${API_BASE_URL}/profile`, { params: { email } })
         .then((res) => {
           if (res.data) {
+            if (res.data.college) {
+              localStorage.setItem("college", res.data.college);
+              setUserClg(res.data.college);
+            }
             if (res.data.department) {
               localStorage.setItem("department", res.data.department);
               setUserDept(res.data.department);
@@ -40,12 +46,13 @@ export default function Library() {
 
   useEffect(() => {
     fetchPDFs();
-  }, [userDept, userYr]);
+  }, [userClg, userDept, userYr]);
 
   const fetchPDFs = async () => {
     try {
       const params = {};
       if (isStudent) {
+        params.college = userClg;
         params.department = userDept;
         params.year = userYr;
         params.role = "student";
@@ -71,10 +78,15 @@ export default function Library() {
       return;
     }
 
+    const currentCollege = localStorage.getItem("college") || userClg || "ALL";
+    const currentEmail = localStorage.getItem("email") || "";
+
     const formData = new FormData();
     formData.append("pdf", file);
+    formData.append("college", currentCollege);
     formData.append("department", uploadDept);
     formData.append("year", uploadYear);
+    formData.append("uploaded_by", currentEmail);
 
     try {
       setUploading(true);
@@ -87,7 +99,7 @@ export default function Library() {
       } else {
         await fetchPDFs();
         setFile(null);
-        alert(`PDF Uploaded & processed for ${uploadDept} - ${uploadYear}!`);
+        alert(`PDF Uploaded & processed for ${currentCollege} — ${uploadDept} - ${uploadYear}!`);
       }
     } catch (error) {
       console.error("PDF UPLOAD ERROR:", error);
