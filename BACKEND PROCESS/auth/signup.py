@@ -38,19 +38,17 @@ def create_user(
         # Role normalize
         role = role.lower()
 
-        # Admin account creation block
-        if role == "admin":
-            return {
-                "status": False,
-                "message": "Admin account cannot be created via signup."
-            }
-
-        # Allow only student and staff
-        if role not in ["student", "staff"]:
+        # Allow student, staff, and admin
+        if role not in ["student", "staff", "admin"]:
             return {
                 "status": False,
                 "message": "Invalid role selected"
             }
+
+        # Admin does not have department or year
+        if role == "admin":
+            department = None
+            year = None
 
         hashed_password = pwd_context.hash(
             password

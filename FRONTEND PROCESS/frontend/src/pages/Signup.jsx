@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaChevronDown, FaSearch, FaCheck } from "react-icons/fa";
+import { TN_ENGINEERING_COLLEGES, ENGINEERING_DEPARTMENTS } from "../data/collegesAndDepartments";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -17,7 +18,13 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState(roleParam);
+  
+  // College search & select state
   const [college, setCollege] = useState("");
+  const [collegeSearch, setCollegeSearch] = useState("");
+  const [isCollegeDropdownOpen, setIsCollegeDropdownOpen] = useState(false);
+  const collegeDropdownRef = useRef(null);
+
   const [department, setDepartment] = useState("CSE");
   const [year, setYear] = useState("3rd Year");
   const [error, setError] = useState("");
@@ -29,16 +36,43 @@ export default function Signup() {
     }
   }, [roleParam]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (collegeDropdownRef.current && !collegeDropdownRef.current.contains(event.target)) {
+        setIsCollegeDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const filteredColleges = TN_ENGINEERING_COLLEGES.filter((col) =>
+    col.toLowerCase().includes(collegeSearch.toLowerCase())
+  );
+
   const handleSignup = async () => {
     setError("");
 
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name.trim() || !email.trim() || !password || !confirmPassword) {
       setError("Please fill all required fields");
       return;
     }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match!");
+      return;
+    }
+
+    if (!college.trim()) {
+      setError("Please select your College Name");
+      return;
+    }
+
+    if (role !== "admin" && !department) {
+      setError("Please select your Department");
       return;
     }
 
@@ -50,13 +84,13 @@ export default function Signup() {
         null,
         {
           params: {
-            name,
-            email,
+            name: name.trim(),
+            email: email.trim(),
             password,
             role,
-            college,
-            department,
-            year,
+            college: college.trim(),
+            department: role === "admin" ? null : department,
+            year: role === "student" ? year : null,
           },
         }
       );
@@ -75,6 +109,10 @@ export default function Signup() {
     }
   };
 
+  const isAdmin = role === "admin";
+  const isStaff = role === "staff";
+  const isStudent = role === "student";
+
   return (
     <div
       style={{
@@ -90,7 +128,7 @@ export default function Signup() {
     >
       <div
         style={{
-          width: "440px",
+          width: "460px",
           padding: "35px",
           borderRadius: "20px",
           background: "#171717",
@@ -270,80 +308,189 @@ export default function Signup() {
           </button>
         </div>
 
-        {/* COLLEGE NAME */}
-        <input
-          type="text"
-          placeholder="College Name"
-          value={college}
-          onChange={(e) => setCollege(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "12px 14px",
-            marginBottom: "12px",
-            background: "#262626",
-            color: "white",
-            border: "1px solid #404040",
-            borderRadius: "10px",
-            outline: "none",
-            boxSizing: "border-box"
-          }}
-        />
-
-        {/* DEPARTMENT DROPDOWN */}
-        <div style={{ marginBottom: "12px" }}>
+        {/* SEARCHABLE TAMIL NADU COLLEGE SELECTOR */}
+        <div style={{ position: "relative", marginBottom: "12px" }} ref={collegeDropdownRef}>
           <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
-            Department
+            College Name (Tamil Nadu Engineering Colleges)
           </label>
-          <select
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
+          <div
+            onClick={() => setIsCollegeDropdownOpen(!isCollegeDropdownOpen)}
             style={{
               width: "100%",
               padding: "12px 14px",
               background: "#262626",
-              color: "white",
-              border: "1px solid #404040",
+              color: college ? "white" : "#9ca3af",
+              border: isCollegeDropdownOpen ? "1px solid #38bdf8" : "1px solid #404040",
               borderRadius: "10px",
-              outline: "none",
-              boxSizing: "border-box"
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              boxSizing: "border-box",
+              fontSize: "13px"
             }}
           >
-            <option value="CSE">CSE (Computer Science & Engg)</option>
-            <option value="ECE">ECE (Electronics & Comm Engg)</option>
-            <option value="EEE">EEE (Electrical & Electronics Engg)</option>
-            <option value="MECH">MECH (Mechanical Engg)</option>
-            <option value="IT">IT (Information Technology)</option>
-            <option value="CIVIL">CIVIL (Civil Engg)</option>
-            <option value="AIDS">AIDS (AI & Data Science)</option>
-            <option value="AIML">AIML (AI & Machine Learning)</option>
-          </select>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: "8px" }}>
+              {college || "Select or Type College Name..."}
+            </span>
+            <FaChevronDown style={{ fontSize: "12px", color: "#9ca3af", flexShrink: 0 }} />
+          </div>
+
+          {/* DROPDOWN POPUP */}
+          {isCollegeDropdownOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                marginTop: "4px",
+                background: "#1e1e1e",
+                border: "1px solid #404040",
+                borderRadius: "10px",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.8)",
+                zIndex: 1000,
+                maxHeight: "260px",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden"
+              }}
+            >
+              {/* SEARCH INPUT */}
+              <div style={{ padding: "8px", borderBottom: "1px solid #333", display: "flex", alignItems: "center", gap: "8px", background: "#262626" }}>
+                <FaSearch style={{ color: "#9ca3af", fontSize: "13px" }} />
+                <input
+                  type="text"
+                  placeholder="Type college name to filter..."
+                  value={collegeSearch}
+                  onChange={(e) => setCollegeSearch(e.target.value)}
+                  autoFocus
+                  style={{
+                    width: "100%",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    color: "white",
+                    fontSize: "13px"
+                  }}
+                />
+              </div>
+
+              {/* LIST */}
+              <div style={{ overflowY: "auto", maxHeight: "200px" }}>
+                {collegeSearch.trim() && (
+                  <div
+                    onClick={() => {
+                      setCollege(collegeSearch.trim());
+                      setIsCollegeDropdownOpen(false);
+                    }}
+                    style={{
+                      padding: "10px 14px",
+                      fontSize: "13px",
+                      color: "#38bdf8",
+                      cursor: "pointer",
+                      borderBottom: "1px solid #2a2a2a",
+                      background: "#252525"
+                    }}
+                  >
+                    + Use: "{collegeSearch.trim()}" (Custom College)
+                  </div>
+                )}
+
+                {filteredColleges.length > 0 ? (
+                  filteredColleges.map((col, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        setCollege(col);
+                        setIsCollegeDropdownOpen(false);
+                      }}
+                      style={{
+                        padding: "10px 14px",
+                        fontSize: "13px",
+                        color: college === col ? "#38bdf8" : "#e5e7eb",
+                        background: college === col ? "#2a3441" : "transparent",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        borderBottom: "1px solid #262626"
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#2d2d2d")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = college === col ? "#2a3441" : "transparent")}
+                    >
+                      <span>{col}</span>
+                      {college === col && <FaCheck style={{ color: "#38bdf8", fontSize: "12px" }} />}
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ padding: "14px", textAlign: "center", color: "#9ca3af", fontSize: "13px" }}>
+                    No matching colleges found.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* YEAR DROPDOWN */}
-        <div style={{ marginBottom: "16px" }}>
-          <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
-            Year (as per role)
-          </label>
-          <select
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px 14px",
-              background: "#262626",
-              color: "white",
-              border: "1px solid #404040",
-              borderRadius: "10px",
-              outline: "none",
-              boxSizing: "border-box"
-            }}
-          >
-            <option value="1st Year">1st Year</option>
-            <option value="2nd Year">2nd Year</option>
-            <option value="3rd Year">3rd Year</option>
-            <option value="4th Year">4th Year</option>
-          </select>
-        </div>
+        {/* DEPARTMENT DROPDOWN (ONLY FOR STAFF AND STUDENT - HIDDEN FOR ADMIN) */}
+        {!isAdmin && (
+          <div style={{ marginBottom: "12px" }}>
+            <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
+              Department
+            </label>
+            <select
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px 14px",
+                background: "#262626",
+                color: "white",
+                border: "1px solid #404040",
+                borderRadius: "10px",
+                outline: "none",
+                boxSizing: "border-box",
+                fontSize: "13px"
+              }}
+            >
+              {ENGINEERING_DEPARTMENTS.map((dept) => (
+                <option key={dept.code} value={dept.code}>
+                  {dept.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* YEAR DROPDOWN (ONLY FOR STUDENT - HIDDEN FOR ADMIN AND STAFF) */}
+        {isStudent && (
+          <div style={{ marginBottom: "16px" }}>
+            <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
+              Year of Study
+            </label>
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px 14px",
+                background: "#262626",
+                color: "white",
+                border: "1px solid #404040",
+                borderRadius: "10px",
+                outline: "none",
+                boxSizing: "border-box",
+                fontSize: "13px"
+              }}
+            >
+              <option value="1st Year">1st Year</option>
+              <option value="2nd Year">2nd Year</option>
+              <option value="3rd Year">3rd Year</option>
+              <option value="4th Year">4th Year</option>
+            </select>
+          </div>
+        )}
 
         {/* SUBMIT BUTTON */}
         <button
@@ -351,6 +498,7 @@ export default function Signup() {
           disabled={loading}
           style={{
             width: "100%",
+            marginTop: isAdmin ? "10px" : "0px",
             padding: "14px",
             borderRadius: "30px",
             border: "none",
