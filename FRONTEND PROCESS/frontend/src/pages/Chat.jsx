@@ -231,6 +231,10 @@ export default function Chat() {
         .join("\n");
     }
 
+    const userDepartment = localStorage.getItem("department") || "";
+    const userYear = localStorage.getItem("year") || "";
+    const userRole = localStorage.getItem("role") || "";
+
     abortControllerRef.current = new AbortController();
 
     try {
@@ -241,7 +245,10 @@ export default function Chat() {
         body: JSON.stringify({
           query: currentMessage,
           history: recentHistory,
-          model_name: (model === "Llama" || model === "Llama 3.2") ? "llama3.2:1b" : "qwen2.5:1.5b"
+          model_name: (model === "Llama" || model === "Llama 3.2") ? "llama3.2:1b" : "qwen2.5:1.5b",
+          department: userDepartment,
+          year: userYear,
+          role: userRole
         })
       });
 

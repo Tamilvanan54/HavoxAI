@@ -196,9 +196,40 @@ class RAGEngine:
 
         return is_math, is_big, is_diagram
 
-    def _get_context_and_docs(self, query: str, k: int = 4) -> tuple[str, list, list]:
+def _normalize_dept(d: str | None) -> str:
+    if not d:
+        return "ALL"
+    s = re.sub(r'[^a-zA-Z0-9]', '', str(d)).upper()
+    if "AIML" in s or "AIANDML" in s or "MACHINE" in s:
+        return "AIML"
+    if "AIDS" in s or "DATASCIENCE" in s:
+        return "AIDS"
+    return s
+
+def _normalize_year(y: str | None) -> str:
+    if not y:
+        return "ALL"
+    s = str(y).lower()
+    if "1" in s:
+        return "1st Year"
+    if "2" in s:
+        return "2nd Year"
+    if "3" in s:
+        return "3rd Year"
+    if "4" in s:
+        return "4th Year"
+    return s.strip()
+
+    def _get_context_and_docs(
+        self,
+        query: str,
+        k: int = 4,
+        user_dept: str | None = None,
+        user_year: str | None = None,
+        user_role: str | None = None
+    ) -> tuple[str, list, list]:
         """
-        Retrieve relevant document chunks from vectorstore with strict similarity scoring & keyword matching.
+        Retrieve relevant document chunks from vectorstore with strict similarity scoring & department/year access control.
         Returns: (context_text, valid_docs, raw_sources_metadata)
         """
         try:
@@ -233,13 +264,58 @@ class RAGEngine:
 
             results = []
             seen_contents = set()
+
+            def _is_doc_allowed_for_student(doc) -> bool:
+                doc_name = doc.metadata.get("source", "")
+                doc_dept = doc.metadata.get("department")
+                doc_year = doc.metadata.get("year")
+
+                if not doc_dept or not doc_year or doc_dept == "ALL":
+                    try:
+                        import sys
+                        rag_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+                        if rag_dir not in sys.path:
+                            sys.path.insert(0, rag_dir)
+                        from main import parse_pdf_dept_year
+                        parsed_d, parsed_y = parse_pdf_dept_year(doc_name)
+                        doc_dept = doc_dept or parsed_d
+                        doc_year = doc_year or parsed_y
+                    except Exception:
+                        pass
+
+                doc_dept = doc_dept or "ALL"
+                doc_year = doc_year or "ALL"
+
+                # Strict Access Control Check for Student
+                is_student = (user_role and user_role.lower() == "student") or (user_dept and user_dept.upper() != "ALL")
+                if is_student:
+                    norm_u_dept = _normalize_dept(user_dept)
+                    norm_u_year = _normalize_year(user_year)
+
+                    norm_doc_dept = _normalize_dept(doc_dept)
+                    norm_doc_year = _normalize_year(doc_year)
+
+                    if norm_doc_dept != "ALL" and norm_u_dept != "ALL" and norm_doc_dept != norm_u_dept:
+                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' dept '{norm_doc_dept}' != Student dept '{norm_u_dept}'")
+                        return False
+
+                    if norm_doc_year != "ALL" and norm_u_year != "ALL" and norm_doc_year != norm_u_year:
+                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' year '{norm_doc_year}' != Student year '{norm_u_year}'")
+                        return False
+
+                return True
+
             if self.vectorstore:
                 for q in search_queries:
                     try:
                         # Use similarity_search_with_score to inspect L2 distance
-                        q_docs_with_score = self.vectorstore.similarity_search_with_score(q, k=k)
+                        q_docs_with_score = self.vectorstore.similarity_search_with_score(q, k=k*3)
                         for doc, score in q_docs_with_score:
                             if not doc.page_content or doc.page_content in seen_contents:
+                                continue
+
+                            # Department & Year Access Control Check
+                            if not _is_doc_allowed_for_student(doc):
                                 continue
 
                             # Score threshold: L2 distance in Chroma (>1.25 = weak / low similarity)
@@ -535,7 +611,10 @@ Answer:"""
     def query_stream_sse(
         self,
         query_text: str,
-        history: str | list | None = None
+        history: str | list | None = None,
+        department: str | None = None,
+        year: str | None = None,
+        role: str | None = None
     ) -> Generator[str, None, None]:
         """
         SSE Generator yielding structured SSE events:
@@ -593,7 +672,13 @@ Answer:"""
         else:
             k_value = 3
 
-        context_text, docs, sources_metadata = self._get_context_and_docs(search_query, k=k_value)
+        context_text, docs, sources_metadata = self._get_context_and_docs(
+            search_query,
+            k=k_value,
+            user_dept=department,
+            user_year=year,
+            user_role=role
+        )
 
         t_ret = round((time.time() - t_ret_start) * 1000, 2)
 
