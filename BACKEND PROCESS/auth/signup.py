@@ -45,8 +45,8 @@ def create_user(
                 "message": "Invalid role selected"
             }
 
-        # Admin does not have department or year
-        if role == "admin":
+        # Admin and Staff do not have department or year during registration
+        if role in ["admin", "staff"]:
             department = None
             year = None
 

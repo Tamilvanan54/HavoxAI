@@ -71,7 +71,7 @@ export default function Signup() {
       return;
     }
 
-    if (role !== "admin" && !department) {
+    if (role === "student" && !department) {
       setError("Please select your Department");
       return;
     }
@@ -89,7 +89,7 @@ export default function Signup() {
             password,
             role,
             college: college.trim(),
-            department: role === "admin" ? null : department,
+            department: role === "student" ? department : null,
             year: role === "student" ? year : null,
           },
         }
@@ -433,8 +433,8 @@ export default function Signup() {
           )}
         </div>
 
-        {/* DEPARTMENT DROPDOWN (ONLY FOR STAFF AND STUDENT - HIDDEN FOR ADMIN) */}
-        {!isAdmin && (
+        {/* DEPARTMENT DROPDOWN (ONLY FOR STUDENT - HIDDEN FOR ADMIN AND STAFF) */}
+        {isStudent && (
           <div style={{ marginBottom: "12px" }}>
             <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
               Department
@@ -498,7 +498,7 @@ export default function Signup() {
           disabled={loading}
           style={{
             width: "100%",
-            marginTop: isAdmin ? "10px" : "0px",
+            marginTop: (!isStudent) ? "10px" : "0px",
             padding: "14px",
             borderRadius: "30px",
             border: "none",
