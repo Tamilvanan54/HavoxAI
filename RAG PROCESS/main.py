@@ -429,6 +429,7 @@ def handle_query(request: QueryRequest):
 def handle_query_stream(request: QueryRequest):
     """SSE streaming endpoint returning status, meta, tokens, and final response metadata."""
     global engine
+    print(f"📥 [RAG Stream] Query: '{request.query[:40]}' | Dept: '{request.department}' | Year: '{request.year}' | Role: '{request.role}'")
     if not engine:
         print("⚡ Creating instant lightweight RAG engine for stream request...")
         engine = RAGEngine(vectorstore=None, model_name=os.getenv("RAG_MODEL_NAME", "qwen2.5:1.5b"))
