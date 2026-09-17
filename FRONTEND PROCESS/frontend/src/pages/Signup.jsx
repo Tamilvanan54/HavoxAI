@@ -100,19 +100,39 @@ export default function Signup() {
         }}
       >
         {/* LOGO */}
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: "20px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "8px"
+          }}
+        >
           <img
-            src="/havox-full-logo.png"
+            src="/logo.png"
             alt="HavoxAI Logo"
             style={{
-              width: "auto",
-              maxWidth: "100%",
-              height: "75px",
-              objectFit: "contain",
+              width: "65px",
+              height: "65px",
+              borderRadius: "14px",
+              objectFit: "cover",
               display: "block",
-              margin: "0 auto"
+              boxShadow: "0 4px 18px rgba(0, 194, 255, 0.25)"
             }}
           />
+          <span
+            style={{
+              fontSize: "22px",
+              fontWeight: "700",
+              color: "#ffffff",
+              letterSpacing: "-0.5px",
+              fontFamily: "'Inter', system-ui, sans-serif"
+            }}
+          >
+            HavoxAI
+          </span>
         </div>
 
         <h2 style={{ textAlign: "center", margin: "0 0 6px 0", fontSize: "20px", color: "white" }}>

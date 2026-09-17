@@ -98,9 +98,46 @@ export default function ForgotPassword() {
           borderRadius: "15px",
         }}
       >
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: "20px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "8px"
+          }}
+        >
+          <img
+            src="/logo.png"
+            alt="HavoxAI Logo"
+            style={{
+              width: "60px",
+              height: "60px",
+              borderRadius: "14px",
+              objectFit: "cover",
+              display: "block",
+              boxShadow: "0 4px 18px rgba(0, 194, 255, 0.25)"
+            }}
+          />
+          <span
+            style={{
+              fontSize: "22px",
+              fontWeight: "700",
+              color: "#ffffff",
+              letterSpacing: "-0.5px"
+            }}
+          >
+            HavoxAI
+          </span>
+        </div>
+
         <h2
           style={{
             textAlign: "center",
+            marginTop: "0",
+            marginBottom: "15px",
+            fontSize: "18px"
           }}
         >
           Forgot Password

@@ -113,18 +113,38 @@ currentChatId
           <FiMenu />
         </button>
 
-        <img
-          src="/havox-full-logo.png"
-          alt="HavoxAI"
+        <div
+          onClick={() => setIsOpen((prev) => !prev)}
           style={{
-            height: "44px",
-            width: "auto",
-            objectFit: "contain",
-            marginLeft: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginLeft: "12px",
             cursor: "pointer"
           }}
-          onClick={() => setIsOpen((prev) => !prev)}
-        />
+        >
+          <img
+            src="/logo.png"
+            alt="HavoxAI"
+            style={{
+              height: "36px",
+              width: "36px",
+              borderRadius: "8px",
+              objectFit: "cover"
+            }}
+          />
+          <span
+            style={{
+              fontSize: "20px",
+              fontWeight: "700",
+              color: "#ffffff",
+              letterSpacing: "-0.5px",
+              fontFamily: "'Inter', system-ui, sans-serif"
+            }}
+          >
+            HavoxAI
+          </span>
+        </div>
       </div>
 
       {isOpen && (

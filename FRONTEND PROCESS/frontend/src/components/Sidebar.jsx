@@ -100,21 +100,32 @@ export default function Sidebar({
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
+            gap: "10px",
             marginBottom: "20px",
-            padding: "5px 0",
+            padding: "5px 6px",
           }}
         >
           <img
-            src="/havox-full-logo.png"
+            src="/logo.png"
             alt="HavoxAI"
             style={{
-              height: "48px",
-              width: "auto",
-              maxWidth: "100%",
-              objectFit: "contain",
+              height: "36px",
+              width: "36px",
+              borderRadius: "8px",
+              objectFit: "cover",
             }}
           />
+          <span
+            style={{
+              fontSize: "22px",
+              fontWeight: "700",
+              color: "#ffffff",
+              letterSpacing: "-0.5px",
+              fontFamily: "'Inter', system-ui, sans-serif"
+            }}
+          >
+            HavoxAI
+          </span>
         </div>
 
         {/* NEW CHAT */}

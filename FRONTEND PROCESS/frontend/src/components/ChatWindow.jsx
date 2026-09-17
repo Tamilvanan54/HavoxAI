@@ -137,17 +137,29 @@ export default function ChatWindow({ messages, userMessageRefs }) {
 
         <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
           {/* Logo Frame */}
-          <div style={{ marginBottom: "24px", padding: "10px 16px", background: "rgba(255, 255, 255, 0.03)", borderRadius: "20px", border: "1px solid rgba(255, 255, 255, 0.08)", backdropFilter: "blur(8px)" }}>
+          <div style={{ marginBottom: "24px", display: "flex", alignItems: "center", gap: "12px", padding: "10px 20px", background: "rgba(255, 255, 255, 0.03)", borderRadius: "20px", border: "1px solid rgba(255, 255, 255, 0.08)", backdropFilter: "blur(8px)" }}>
             <img
-              src="/havox-full-logo.png"
+              src="/logo.png"
               alt="HavoxAI"
               style={{
-                height: "65px",
-                width: "auto",
-                objectFit: "contain",
+                height: "44px",
+                width: "44px",
+                borderRadius: "10px",
+                objectFit: "cover",
                 display: "block"
               }}
             />
+            <span
+              style={{
+                fontSize: "24px",
+                fontWeight: "700",
+                color: "#ffffff",
+                letterSpacing: "-0.5px",
+                fontFamily: "'Inter', system-ui, sans-serif"
+              }}
+            >
+              HavoxAI
+            </span>
           </div>
 
           {/* Premium Gradient Title */}

@@ -147,21 +147,36 @@ export default function Login() {
         <div
           style={{
             textAlign: "center",
-            marginBottom: "30px"
+            marginBottom: "28px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "10px"
           }}
         >
           <img
-            src="/havox-full-logo.png"
+            src="/logo.png"
             alt="HavoxAI Logo"
             style={{
-              width: "auto",
-              maxWidth: "100%",
-              height: "100px",
-              objectFit: "contain",
+              width: "75px",
+              height: "75px",
+              borderRadius: "16px",
+              objectFit: "cover",
               display: "block",
-              margin: "0 auto"
+              boxShadow: "0 4px 20px rgba(0, 194, 255, 0.25)"
             }}
           />
+          <span
+            style={{
+              fontSize: "26px",
+              fontWeight: "700",
+              color: "#ffffff",
+              letterSpacing: "-0.5px",
+              fontFamily: "'Inter', system-ui, sans-serif"
+            }}
+          >
+            HavoxAI
+          </span>
         </div>
 
         {error && (
