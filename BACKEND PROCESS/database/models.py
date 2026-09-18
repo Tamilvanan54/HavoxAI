@@ -328,6 +328,12 @@ class PDFDocument(Base):
         nullable=False
     )
 
+    college = Column(
+        String(150),
+        nullable=False,
+        default="ALL"
+    )
+
     department = Column(
         String(100),
         nullable=False,

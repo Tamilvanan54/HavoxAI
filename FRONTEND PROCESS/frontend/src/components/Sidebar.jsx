@@ -22,7 +22,9 @@ export default function Sidebar({
   const isStaff = role === "staff";
 
   // Post Document Modal State
+  const userCollege = localStorage.getItem("college") || "";
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [college, setCollege] = useState(userCollege || "ALL");
   const [department, setDepartment] = useState("CSE");
   const [year, setYear] = useState("3rd Year");
   const [file, setFile] = useState(null);
@@ -45,6 +47,7 @@ export default function Sidebar({
 
     const formData = new FormData();
     formData.append("pdf", file);
+    formData.append("college", college || userCollege || "ALL");
     formData.append("department", department);
     formData.append("year", year);
     formData.append("uploaded_by", email);
@@ -412,8 +415,31 @@ export default function Sidebar({
               Post Document (Library)
             </h3>
             <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "#9ca3af" }}>
-              Upload study material tailored to specific department & year
+              Upload study material tailored to specific college, department & year
             </p>
+
+            {/* COLLEGE NAME */}
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
+                College Name
+              </label>
+              <input
+                type="text"
+                placeholder="College Name (e.g. Erode Sengunthar)"
+                value={college}
+                onChange={(e) => setCollege(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  background: "#262626",
+                  color: "white",
+                  border: "1px solid #404040",
+                  borderRadius: "10px",
+                  outline: "none",
+                  boxSizing: "border-box"
+                }}
+              />
+            </div>
 
             {/* SELECT DEPARTMENT */}
             <div style={{ marginBottom: "14px" }}>

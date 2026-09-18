@@ -196,6 +196,12 @@ class RAGEngine:
 
         return is_math, is_big, is_diagram
 
+def _normalize_college(c: str | None) -> str:
+    if not c:
+        return "ALL"
+    s = re.sub(r'[^a-zA-Z0-9]', '', str(c)).upper()
+    return s if s else "ALL"
+
 def _normalize_dept(d: str | None) -> str:
     if not d:
         return "ALL"
@@ -224,12 +230,13 @@ def _normalize_year(y: str | None) -> str:
         self,
         query: str,
         k: int = 4,
+        user_college: str | None = None,
         user_dept: str | None = None,
         user_year: str | None = None,
         user_role: str | None = None
     ) -> tuple[str, list, list]:
         """
-        Retrieve relevant document chunks from vectorstore with strict similarity scoring & department/year access control.
+        Retrieve relevant document chunks from vectorstore with strict similarity scoring & college/department/year access control.
         Returns: (context_text, valid_docs, raw_sources_metadata)
         """
         try:
@@ -267,33 +274,42 @@ def _normalize_year(y: str | None) -> str:
 
             def _is_doc_allowed_for_student(doc) -> bool:
                 doc_name = doc.metadata.get("source", "")
+                doc_clg = doc.metadata.get("college")
                 doc_dept = doc.metadata.get("department")
                 doc_year = doc.metadata.get("year")
 
-                if not doc_dept or not doc_year or doc_dept == "ALL":
+                if not doc_clg or not doc_dept or not doc_year or doc_dept == "ALL":
                     try:
                         import sys
                         rag_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
                         if rag_dir not in sys.path:
                             sys.path.insert(0, rag_dir)
-                        from main import parse_pdf_dept_year
-                        parsed_d, parsed_y = parse_pdf_dept_year(doc_name)
+                        from main import parse_pdf_college_dept_year
+                        parsed_c, parsed_d, parsed_y = parse_pdf_college_dept_year(doc_name)
+                        doc_clg = doc_clg or parsed_c
                         doc_dept = doc_dept or parsed_d
                         doc_year = doc_year or parsed_y
                     except Exception:
                         pass
 
+                doc_clg = doc_clg or "ALL"
                 doc_dept = doc_dept or "ALL"
                 doc_year = doc_year or "ALL"
 
                 # Strict Access Control Check for Student
                 is_student = (user_role and user_role.lower() == "student") or (user_dept and user_dept.upper() != "ALL")
                 if is_student:
+                    norm_u_clg = _normalize_college(user_college)
                     norm_u_dept = _normalize_dept(user_dept)
                     norm_u_year = _normalize_year(user_year)
 
+                    norm_doc_clg = _normalize_college(doc_clg)
                     norm_doc_dept = _normalize_dept(doc_dept)
                     norm_doc_year = _normalize_year(doc_year)
+
+                    if norm_doc_clg != "ALL" and norm_u_clg != "ALL" and norm_doc_clg != norm_u_clg:
+                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' college '{norm_doc_clg}' != Student college '{norm_u_clg}'")
+                        return False
 
                     if norm_doc_dept != "ALL" and norm_u_dept != "ALL" and norm_doc_dept != norm_u_dept:
                         print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' dept '{norm_doc_dept}' != Student dept '{norm_u_dept}'")
@@ -612,6 +628,7 @@ Answer:"""
         self,
         query_text: str,
         history: str | list | None = None,
+        college: str | None = None,
         department: str | None = None,
         year: str | None = None,
         role: str | None = None
@@ -675,6 +692,7 @@ Answer:"""
         context_text, docs, sources_metadata = self._get_context_and_docs(
             search_query,
             k=k_value,
+            user_college=college,
             user_dept=department,
             user_year=year,
             user_role=role

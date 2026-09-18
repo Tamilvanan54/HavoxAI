@@ -15,6 +15,7 @@ def run_migrations():
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(100);",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS year VARCHAR(50);",
         "ALTER TABLE feedback ADD COLUMN IF NOT EXISTS modified_answer TEXT;",
+        "ALTER TABLE pdf_documents ADD COLUMN IF NOT EXISTS college VARCHAR(150) DEFAULT 'ALL';",
         "ALTER TABLE pdf_documents ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'ALL';",
         "ALTER TABLE pdf_documents ADD COLUMN IF NOT EXISTS year VARCHAR(50) DEFAULT 'ALL';",
         "ALTER TABLE pdf_documents ADD COLUMN IF NOT EXISTS uploaded_by VARCHAR(150);"

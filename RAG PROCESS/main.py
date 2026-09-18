@@ -31,9 +31,10 @@ load_dotenv()
 engine: RAGEngine | None = None
 CHROMA_PERSIST_DIR = "./chroma_db"
 
-def parse_pdf_dept_year(file_name: str) -> tuple[str, str]:
-    """Parse department and year metadata from database or filename."""
+def parse_pdf_college_dept_year(file_name: str) -> tuple[str, str, str]:
+    """Parse college, department, and year metadata from database or filename."""
     base_name = os.path.basename(file_name)
+    clg = "ALL"
     dept = "ALL"
     year = "ALL"
 
@@ -47,13 +48,14 @@ def parse_pdf_dept_year(file_name: str) -> tuple[str, str]:
         db = SessionLocal()
         doc = db.query(PDFDocument).filter(PDFDocument.filename == base_name).first()
         if doc:
+            clg = getattr(doc, "college", "ALL") or "ALL"
             dept = doc.department or "ALL"
             year = doc.year or "ALL"
         db.close()
     except Exception:
         pass
 
-    if dept == "ALL" and year == "ALL":
+    if clg == "ALL" and dept == "ALL" and year == "ALL":
         parts = base_name.split("_")
         known_depts = ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML"]
         for p in parts:
@@ -75,7 +77,7 @@ def parse_pdf_dept_year(file_name: str) -> tuple[str, str]:
             elif "4th" in p_lower or "4year" in p_lower:
                 year = "4th Year"
 
-    return dept, year
+    return clg, dept, year
 
 def extract_pdf_documents(pdf_path: str) -> list[Document]:
     """Extract text page-by-page using PyMuPDF (fitz) with PyPDF2 and Tesseract OCR fallbacks."""
@@ -84,7 +86,7 @@ def extract_pdf_documents(pdf_path: str) -> list[Document]:
 
     documents = []
     file_name = os.path.basename(pdf_path)
-    dept_meta, year_meta = parse_pdf_dept_year(file_name)
+    clg_meta, dept_meta, year_meta = parse_pdf_college_dept_year(file_name)
 
     try:
         doc = fitz.open(pdf_path)
@@ -135,13 +137,14 @@ def extract_pdf_documents(pdf_path: str) -> list[Document]:
                         metadata={
                             "source": file_name,
                             "page": page_num + 1,
+                            "college": clg_meta,
                             "department": dept_meta,
                             "year": year_meta
                         },
                     )
                 )
         doc.close()
-        print(f"   ✓ Extracted {len(documents)} pages from {file_name} [Dept: {dept_meta}, Year: {year_meta}]")
+        print(f"   ✓ Extracted {len(documents)} pages from {file_name} [College: {clg_meta}, Dept: {dept_meta}, Year: {year_meta}]")
     except Exception as e:
         print(f"⚠️ Error extracting PDF text from {pdf_path}: {e}")
     return documents
@@ -333,6 +336,7 @@ class QueryRequest(BaseModel):
     query: str = Field(..., examples=["What is Machine Learning?"])
     model_name: str | None = Field(default="qwen2.5:1.5b")
     history: Any | None = None
+    college: str | None = None
     department: str | None = None
     year: str | None = None
     role: str | None = None
@@ -453,6 +457,7 @@ def handle_query(request: QueryRequest):
     events = list(engine.query_stream_sse(
         request.query,
         history=request.history,
+        college=request.college,
         department=request.department,
         year=request.year,
         role=request.role
@@ -493,6 +498,7 @@ def handle_query_stream(request: QueryRequest):
         engine.query_stream_sse(
             request.query,
             history=request.history,
+            college=request.college,
             department=request.department,
             year=request.year,
             role=request.role

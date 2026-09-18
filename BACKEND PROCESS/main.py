@@ -477,6 +477,7 @@ from fastapi import Form
 @app.post("/upload-pdf")
 async def upload_pdf(
     pdf: UploadFile = File(...),
+    college: str = Form("ALL"),
     department: str = Form("ALL"),
     year: str = Form("ALL"),
     uploaded_by: str = Form(None)
@@ -498,11 +499,13 @@ async def upload_pdf(
 
         # 2. Filename sanitization
         clean_base = re.sub(r'[^a-zA-Z0-9_.-]', '_', os.path.basename(pdf.filename))
-        # Embed dept/year prefix if not default ALL
+        college_clean = re.sub(r'[^a-zA-Z0-9]', '', college or "ALL")
         dept_clean = re.sub(r'[^a-zA-Z0-9]', '', department or "ALL")
         year_clean = re.sub(r'[^a-zA-Z0-9]', '', year or "ALL")
 
-        if dept_clean != "ALL" and year_clean != "ALL":
+        if college_clean != "ALL" and dept_clean != "ALL" and year_clean != "ALL":
+            safe_filename = f"{college_clean}_{dept_clean}_{year_clean}_{clean_base}"
+        elif dept_clean != "ALL" and year_clean != "ALL":
             safe_filename = f"{dept_clean}_{year_clean}_{clean_base}"
         else:
             safe_filename = clean_base
@@ -565,6 +568,7 @@ async def upload_pdf(
                 pdf_doc = PDFDocument(
                     filename=safe_filename,
                     original_name=pdf.filename,
+                    college=college or "ALL",
                     department=department or "ALL",
                     year=year or "ALL",
                     uploaded_by=uploaded_by
@@ -576,12 +580,12 @@ async def upload_pdf(
             print(f"⚠️ DB PDF Record note: {db_err}")
 
         # Trigger ingest on RAG service asynchronously
-        def _trigger_rag_ingest(fname: str, dept: str, yr: str):
+        def _trigger_rag_ingest(fname: str, clg: str, dept: str, yr: str):
             try:
                 print(f"⏳ Calling RAG ingest for {fname}...")
                 resp = requests.post(
                     "http://127.0.0.1:8001/api/ingest",
-                    json={"filename": fname, "department": dept, "year": yr},
+                    json={"filename": fname, "college": clg, "department": dept, "year": yr},
                     timeout=300
                 )
                 if resp.status_code == 200:
@@ -592,12 +596,13 @@ async def upload_pdf(
                 print(f"⚠️ RAG ingest background error for {fname}: {e}")
 
         import threading
-        threading.Thread(target=_trigger_rag_ingest, args=(safe_filename, department, year), daemon=True).start()
+        threading.Thread(target=_trigger_rag_ingest, args=(safe_filename, college, department, year), daemon=True).start()
 
         return {
             "status": True,
-            "message": f"PDF Uploaded successfully for {department} - {year}!",
+            "message": f"PDF Uploaded successfully for {college} - {department} - {year}!",
             "filename": safe_filename,
+            "college": college,
             "department": department,
             "year": year,
             "pages": page_count,
@@ -620,6 +625,7 @@ async def upload_pdf(
 
 @app.get("/pdfs")
 def get_pdfs(
+    college: str | None = None,
     department: str | None = None,
     year: str | None = None,
     role: str | None = None
@@ -629,7 +635,7 @@ def get_pdfs(
 
     all_files = [f for f in os.listdir("uploads") if f.endswith(".pdf")]
 
-    # Query database for department & year metadata if available
+    # Query database for college, department & year metadata if available
     db_metadata = {}
     try:
         from database.connection import SessionLocal
@@ -638,8 +644,9 @@ def get_pdfs(
         docs = db.query(PDFDocument).all()
         for doc in docs:
             db_metadata[doc.filename] = {
-                "department": doc.department,
-                "year": doc.year,
+                "college": getattr(doc, "college", "ALL") or "ALL",
+                "department": doc.department or "ALL",
+                "year": doc.year or "ALL",
                 "original_name": doc.original_name
             }
         db.close()
@@ -649,25 +656,18 @@ def get_pdfs(
     structured_files = []
     for fname in all_files:
         info = db_metadata.get(fname, {})
-        doc_dept = info.get("department")
-        doc_year = info.get("year")
+        doc_college = info.get("college") or "ALL"
+        doc_dept = info.get("department") or "ALL"
+        doc_year = info.get("year") or "ALL"
 
-        # Parse department and year from filename if not in DB
-        if not doc_dept or doc_dept == "ALL":
-            parts = fname.split("_")
-            if len(parts) >= 3 and parts[0] in ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML"]:
-                doc_dept = parts[0]
-                doc_year = parts[1]
-
-        doc_dept = doc_dept or "ALL"
-        doc_year = doc_year or "ALL"
-
-        # Filtering logic for Students: match department & year or ALL
-        if role == "student" or (department and year):
+        # Filtering logic for Students: match college, department & year or ALL
+        if role == "student" or (college and department and year):
+            user_clg = (college or "").strip().lower()
             user_dept = (department or "").strip().upper()
             user_yr = (year or "").strip().lower()
 
-            # Skip if document belongs to a different department/year
+            if user_clg and doc_college != "ALL" and re.sub(r'[^a-zA-Z0-9]', '', doc_college).lower() != re.sub(r'[^a-zA-Z0-9]', '', user_clg):
+                continue
             if user_dept and doc_dept != "ALL" and doc_dept.upper() != user_dept:
                 continue
             if user_yr and doc_year != "ALL" and doc_year.lower() != user_yr:
@@ -675,6 +675,7 @@ def get_pdfs(
 
         structured_files.append({
             "filename": fname,
+            "college": doc_college,
             "department": doc_dept,
             "year": doc_year
         })
