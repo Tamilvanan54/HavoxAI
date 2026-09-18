@@ -65,6 +65,12 @@ export default function Chat() {
   useEffect(() => {
     if (!messages || !messages.length) return;
 
+    // While streaming, always scroll to bottom so user sees new tokens
+    if (isGenerating && chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      return;
+    }
+
     // Find index of the most recent User question
     let lastUserIndex = -1;
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -82,7 +88,7 @@ export default function Chat() {
     } else if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [messages.length, messages[messages.length - 1]?.text]);
+  }, [messages.length, messages[messages.length - 1]?.text, isGenerating]);
 
   // NEW CHAT
   const startNewChat = () => {
