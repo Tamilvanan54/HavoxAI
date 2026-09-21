@@ -108,16 +108,16 @@ export default function Sidebar({
             padding: "5px 0",
           }}
         >
-          <img
-            src="/havox-full-logo.png"
-            alt="HavoxAI"
+          <span
             style={{
-              height: "48px",
-              width: "auto",
-              maxWidth: "100%",
-              objectFit: "contain",
+              fontSize: "22px",
+              fontWeight: "700",
+              color: "white",
+              letterSpacing: "1px",
             }}
-          />
+          >
+            HavoxAI
+          </span>
         </div>
 
         {/* NEW CHAT */}

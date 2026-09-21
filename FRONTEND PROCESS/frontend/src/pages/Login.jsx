@@ -151,17 +151,29 @@ export default function Login() {
           }}
         >
           <img
-            src="/havox-full-logo.png"
+            src="/havox-icon.png"
             alt="HavoxAI Logo"
             style={{
-              width: "auto",
-              maxWidth: "100%",
-              height: "100px",
+              width: "90px",
+              height: "90px",
               objectFit: "contain",
               display: "block",
-              margin: "0 auto"
+              margin: "0 auto",
+              borderRadius: "20px"
             }}
           />
+          <h2
+            style={{
+              color: "white",
+              fontSize: "26px",
+              fontWeight: "700",
+              marginTop: "12px",
+              marginBottom: "0",
+              letterSpacing: "1px"
+            }}
+          >
+            HavoxAI
+          </h2>
         </div>
 
         {error && (
