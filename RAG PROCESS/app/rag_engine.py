@@ -29,6 +29,36 @@ def get_installed_ollama_models() -> list[str]:
         pass
     return []
 
+def _normalize_college(c: str | None) -> str:
+    if not c:
+        return "ALL"
+    s = re.sub(r'[^a-zA-Z0-9]', '', str(c)).upper()
+    return s if s else "ALL"
+
+def _normalize_dept(d: str | None) -> str:
+    if not d:
+        return "ALL"
+    s = re.sub(r'[^a-zA-Z0-9]', '', str(d)).upper()
+    if "AIML" in s or "AIANDML" in s or "MACHINE" in s:
+        return "AIML"
+    if "AIDS" in s or "DATASCIENCE" in s:
+        return "AIDS"
+    return s
+
+def _normalize_year(y: str | None) -> str:
+    if not y:
+        return "ALL"
+    s = str(y).lower()
+    if "1" in s:
+        return "1st Year"
+    if "2" in s:
+        return "2nd Year"
+    if "3" in s:
+        return "3rd Year"
+    if "4" in s:
+        return "4th Year"
+    return s.strip()
+
 class RAGEngine:
 
     def __init__(
@@ -195,36 +225,6 @@ class RAGEngine:
         is_diagram = any(k in query_lower for k in diagram_keywords)
 
         return is_math, is_big, is_diagram
-
-def _normalize_college(c: str | None) -> str:
-    if not c:
-        return "ALL"
-    s = re.sub(r'[^a-zA-Z0-9]', '', str(c)).upper()
-    return s if s else "ALL"
-
-def _normalize_dept(d: str | None) -> str:
-    if not d:
-        return "ALL"
-    s = re.sub(r'[^a-zA-Z0-9]', '', str(d)).upper()
-    if "AIML" in s or "AIANDML" in s or "MACHINE" in s:
-        return "AIML"
-    if "AIDS" in s or "DATASCIENCE" in s:
-        return "AIDS"
-    return s
-
-def _normalize_year(y: str | None) -> str:
-    if not y:
-        return "ALL"
-    s = str(y).lower()
-    if "1" in s:
-        return "1st Year"
-    if "2" in s:
-        return "2nd Year"
-    if "3" in s:
-        return "3rd Year"
-    if "4" in s:
-        return "4th Year"
-    return s.strip()
 
     def _get_context_and_docs(
         self,
