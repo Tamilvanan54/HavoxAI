@@ -114,17 +114,31 @@ currentChatId
         </button>
 
         <img
-          src="/havox-full-logo.png"
+          src="/havox-icon.png"
           alt="HavoxAI"
           style={{
-            height: "44px",
-            width: "auto",
+            height: "36px",
+            width: "36px",
             objectFit: "contain",
             marginLeft: "14px",
+            borderRadius: "8px",
             cursor: "pointer"
           }}
           onClick={() => setIsOpen((prev) => !prev)}
         />
+        <span
+          style={{
+            color: "white",
+            fontWeight: "700",
+            fontSize: "18px",
+            marginLeft: "10px",
+            letterSpacing: "0.5px",
+            cursor: "pointer"
+          }}
+          onClick={() => setIsOpen((prev) => !prev)}
+        >
+          HavoxAI
+        </span>
       </div>
 
       {isOpen && (
