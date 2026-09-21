@@ -33,19 +33,20 @@ export default function SelectRole() {
         }}
       >
         {/* LOGO */}
-        <div style={{ marginBottom: "25px" }}>
+        <div style={{ marginBottom: "25px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
           <img
-            src="/havox-full-logo.png"
+            src="/havox-icon.png"
             alt="HavoxAI Logo"
             style={{
-              width: "auto",
-              maxWidth: "100%",
-              height: "90px",
+              width: "54px",
+              height: "54px",
               objectFit: "contain",
-              display: "block",
-              margin: "0 auto"
+              borderRadius: "12px"
             }}
           />
+          <span style={{ fontSize: "24px", fontWeight: "700", color: "white", letterSpacing: "0.5px" }}>
+            HavoxAI
+          </span>
         </div>
 
         <h2 style={{ margin: "0 0 8px 0", fontSize: "22px", fontWeight: "600", color: "#f3f4f6" }}>
