@@ -74,9 +74,9 @@ class RAGEngine:
         self.options = {
             "num_gpu": 0,
             "temperature": 0.0,
-            "num_predict": 512,
-            "num_ctx": 2048,
-            "num_thread": 4,
+            "num_predict": 300,
+            "num_ctx": 1024,
+            "num_thread": 8,
             "repeat_penalty": 1.05,
             "top_k": 5,
             "top_p": 0.5
@@ -414,9 +414,11 @@ class RAGEngine:
             print(f"[RAG] Vector retrieval error: {e}")
             return "", [], []
 
-    def _build_prompt(self, query: str, context_text: str) -> str:
+    def _build_prompt(self, query: str, context_text: str, history: str = "") -> str:
         is_math, is_big, is_diagram = self._classify_query(query)
         mark_level = self._detect_mark_level(query)
+
+        history_section = f"\nRecent Conversation:\n{history.strip()}\n" if history and history.strip() else ""
 
         strict_guardrail = """Answer the user's question accurately based ONLY on the provided Context below.
 - Rely ONLY on facts explicitly stated in the Context. Do NOT use outside knowledge.
@@ -590,7 +592,7 @@ Answer:"""
 
         return f"""Context:
 {context_text}
-
+{history_section}
 Question: {query}
 
 Instructions:
@@ -712,24 +714,25 @@ Answer:"""
         yield f'event: meta\ndata: {{"sources": {json.dumps(sources_metadata)}, "corrected_query": {json.dumps(corrected_query if display_note else None)}}}\n\n'
 
         # Step 7: Build prompt and stream LLM tokens
-        formatted_prompt = self._build_prompt(corrected_query, context_text)
+        history_str = history if isinstance(history, str) else ""
+        formatted_prompt = self._build_prompt(corrected_query, context_text, history=history_str)
 
         # Dynamic Ollama options based on mark level to allow long 16-mark / 10-mark answers
-        dyn_predict = 1024
-        dyn_ctx = 3072
+        dyn_predict = 600
+        dyn_ctx = 2048
         if mark_lvl is not None:
             if mark_lvl >= 11:
-                dyn_predict = 2500
-                dyn_ctx = 4096
-            elif mark_lvl >= 7:
-                dyn_predict = 1800
-                dyn_ctx = 4096
-            elif mark_lvl >= 3:
-                dyn_predict = 1200
+                dyn_predict = 1500
                 dyn_ctx = 3072
-            elif mark_lvl in (1, 2):
-                dyn_predict = 600
+            elif mark_lvl >= 7:
+                dyn_predict = 1000
                 dyn_ctx = 2048
+            elif mark_lvl >= 3:
+                dyn_predict = 700
+                dyn_ctx = 2048
+            elif mark_lvl in (1, 2):
+                dyn_predict = 400
+                dyn_ctx = 1024
 
         dyn_options = dict(self.options)
         dyn_options["num_predict"] = dyn_predict
