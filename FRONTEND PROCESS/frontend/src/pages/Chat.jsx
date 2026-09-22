@@ -55,14 +55,24 @@ export default function Chat() {
 
   const userMessageRefs = useRef({});
 
-  // AUTO SCROLL - Align scroll to the START of the current user question / response block
+  // AUTO SCROLL
   useEffect(() => {
     if (!messages || !messages.length) return;
 
-    // Find index of the most recent User question
+    const lastMsg = messages[messages.length - 1];
+
+    // During AI streaming: scroll to bottom so answer is visible
+    if (lastMsg?.sender === "AI" && lastMsg?.streaming && lastMsg?.text) {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }
+      return;
+    }
+
+    // Otherwise: scroll to the start of the latest user message
     let lastUserIndex = -1;
     for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i] && messages[i].sender === "User") {
+      if (messages[i]?.sender === "User") {
         lastUserIndex = i;
         break;
       }
@@ -76,7 +86,7 @@ export default function Chat() {
     } else if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  }, [messages.length, messages[messages.length - 1]?.text]);
+  }, [messages.length, messages[messages.length - 1]?.text, messages[messages.length - 1]?.streaming]);
 
   // NEW CHAT
   const startNewChat = () => {

@@ -1,6 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
+
+// Character-by-character typewriter effect for streaming messages
+function TypewriterText({ text, streaming }) {
+  const [displayed, setDisplayed] = useState("");
+  const queueRef = useRef([]);
+  const timerRef = useRef(null);
+  const lastTextRef = useRef("");
+
+  useEffect(() => {
+    if (!streaming) {
+      // Streaming done — show full text immediately
+      setDisplayed(text || "");
+      queueRef.current = [];
+      if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+      lastTextRef.current = text || "";
+      return;
+    }
+
+    // Queue any new characters that arrived
+    if (text && text.length > lastTextRef.current.length) {
+      const newChars = text.slice(lastTextRef.current.length).split("");
+      queueRef.current.push(...newChars);
+      lastTextRef.current = text;
+    }
+
+    // Start interval if not already running
+    if (!timerRef.current) {
+      timerRef.current = setInterval(() => {
+        if (queueRef.current.length > 0) {
+          const batch = queueRef.current.splice(0, 3); // 3 chars at a time = smooth typing
+          setDisplayed(prev => prev + batch.join(""));
+        } else {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      }, 12); // 12ms per tick ≈ 250 chars/sec
+    }
+  }, [text, streaming]);
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+
+  return <>{displayed}</>;
+}
 
 const formatMathText = (text) => {
   if (!text || !text.trim()) return "";
@@ -404,7 +447,10 @@ export default function ChatWindow({ messages, userMessageRefs }) {
                 ) : (
                   (msg.text || (msg.streaming && !msg.status)) && (
                     <>
-                      {formatMathText(msg.text)}
+                      {msg.streaming
+                        ? <TypewriterText text={formatMathText(msg.text)} streaming={msg.streaming} />
+                        : formatMathText(msg.text)
+                      }
                       {msg.streaming && !msg.status && (
                         <span
                           style={{
@@ -414,7 +460,8 @@ export default function ChatWindow({ messages, userMessageRefs }) {
                             marginLeft: "4px",
                             backgroundColor: "#38bdf8",
                             verticalAlign: "middle",
-                            borderRadius: "2px"
+                            borderRadius: "2px",
+                            animation: "blink 1s step-end infinite"
                           }}
                         />
                       )}
