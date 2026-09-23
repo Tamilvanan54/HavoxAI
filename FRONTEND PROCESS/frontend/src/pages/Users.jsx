@@ -256,39 +256,43 @@ export default function Users() {
                     </span>
                   </td>
 
-                  <td
-                    style={
-                      tdStyle
-                    }
-                  >
-                    <button
-                      onClick={() =>
-                        navigate(
-                          `/user-profile/${user.id}`
-                        )
-                      }
-                      title="View Profile"
-                      style={{
-                        background:
-                          "#3b82f6",
-                        color:
-                          "white",
-                        border:
-                          "none",
-                        padding:
-                          "8px 16px",
-                        borderRadius:
-                          "8px",
-                        cursor:
-                          "pointer",
-                        fontSize:
-                          "18px",
-                        fontWeight:
-                          "bold",
-                      }}
-                    >
-                      →
-                    </button>
+                  <td style={tdStyle}>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      {/* View Profile */}
+                      <button
+                        onClick={() => navigate(`/user-profile/${user.id}`)}
+                        title="View Profile"
+                        style={{
+                          background: "#3b82f6",
+                          color: "white",
+                          border: "none",
+                          padding: "8px 16px",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          fontSize: "18px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        →
+                      </button>
+
+                      {/* Delete User */}
+                      <button
+                        onClick={() => deleteUser(user.id)}
+                        title="Delete User"
+                        style={{
+                          background: "#ef4444",
+                          color: "white",
+                          border: "none",
+                          padding: "8px 14px",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          fontSize: "16px",
+                        }}
+                      >
+                        🗑
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )
