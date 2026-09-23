@@ -79,10 +79,12 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState(roleParam);
   const [college, setCollege] = useState("");
+  const [customCollege, setCustomCollege] = useState("");
   const [collegeSearch, setCollegeSearch] = useState("");
   const [showCollegeDropdown, setShowCollegeDropdown] = useState(false);
   const collegeRef = useRef(null);
   const [department, setDepartment] = useState("CSE");
+  const [customDepartment, setCustomDepartment] = useState("");
   const [year, setYear] = useState("3rd Year");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -117,6 +119,9 @@ export default function Signup() {
       return;
     }
 
+    const finalCollege = college === "Other" ? (customCollege.trim() || "Other") : (college || collegeSearch.trim());
+    const finalDept = department === "Other" ? (customDepartment.trim() || "Other") : department;
+
     try {
       setLoading(true);
 
@@ -129,12 +134,13 @@ export default function Signup() {
             email,
             password,
             role,
-            college,
-            department,
+            college: finalCollege,
+            department: finalDept,
             year,
           },
         }
       );
+
 
       if (response.data.status) {
         alert("Account Created Successfully! Please login with your credentials.");
@@ -393,11 +399,43 @@ export default function Signup() {
                 ))
               }
               {TN_COLLEGES.filter(c => c.toLowerCase().includes((collegeSearch || "").toLowerCase())).length === 0 && (
-                <div style={{ padding: "10px 14px", color: "#9ca3af", fontSize: "13px" }}>
-                  No college found
+                <div
+                  onMouseDown={() => {
+                    setCollege("Other");
+                    setCollegeSearch("");
+                    setShowCollegeDropdown(false);
+                  }}
+                  style={{
+                    padding: "10px 14px",
+                    color: "#38bdf8",
+                    cursor: "pointer",
+                    fontSize: "13px"
+                  }}
+                >
+                  + Add Custom College ("Other")
                 </div>
               )}
             </div>
+          )}
+          {college === "Other" && (
+            <input
+              type="text"
+              placeholder="Enter custom college name..."
+              value={customCollege}
+              onChange={(e) => setCustomCollege(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px 14px",
+                marginTop: "8px",
+                background: "#262626",
+                color: "white",
+                border: "1px solid #404040",
+                borderRadius: "10px",
+                outline: "none",
+                boxSizing: "border-box",
+                fontSize: "14px"
+              }}
+            />
           )}
         </div>
 
@@ -446,9 +484,31 @@ export default function Signup() {
               <option value="ROBOTICS">Robotics & Automation</option>
               <option value="CSBS">CSBS (Computer Science & Business Systems)</option>
               <option value="MCT">MCT (Mechatronics)</option>
+              <option value="Other">Other</option>
             </select>
+            {department === "Other" && (
+              <input
+                type="text"
+                placeholder="Enter custom department..."
+                value={customDepartment}
+                onChange={(e) => setCustomDepartment(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  marginTop: "8px",
+                  background: "#262626",
+                  color: "white",
+                  border: "1px solid #404040",
+                  borderRadius: "10px",
+                  outline: "none",
+                  boxSizing: "border-box",
+                  fontSize: "14px"
+                }}
+              />
+            )}
           </div>
         )}
+
 
         {/* YEAR — Students only */}
         {role === "student" && (
