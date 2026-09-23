@@ -34,5 +34,23 @@ def run_migrations():
     except Exception as e:
         print(f"⚠️ DB Migration warning: {e}")
 
+    # Auto-fix existing PDF records where college is 'ALL' but uploader user has a specific college
+    try:
+        from database.connection import SessionLocal
+        from database.models import PDFDocument, User
+        db = SessionLocal()
+        docs = db.query(PDFDocument).all()
+        for doc in docs:
+            if doc.uploaded_by:
+                u = db.query(User).filter(User.email == doc.uploaded_by).first()
+                if u and u.college and (not doc.college or doc.college == "ALL"):
+                    doc.college = u.college
+                    print(f"  ✓ Auto-fixed PDF {doc.filename} college to {u.college}")
+        db.commit()
+        db.close()
+    except Exception as fix_err:
+        print(f"  ⚠️ Auto-fix PDF college note: {fix_err}")
+
+
 if __name__ == "__main__":
     run_migrations()

@@ -19,6 +19,9 @@ export default function Library() {
   const [selectedDept, setSelectedDept] = useState(isStudent ? userDept : "ALL");
   const [selectedYear, setSelectedYear] = useState(isStudent ? userYr : "ALL");
 
+  const userCollege = localStorage.getItem("college") || "";
+  const userEmail = localStorage.getItem("email") || "";
+
   useEffect(() => {
     fetchPDFs();
   }, [selectedDept, selectedYear]);
@@ -26,6 +29,9 @@ export default function Library() {
   const fetchPDFs = async () => {
     try {
       const params = {};
+      if (userCollege) {
+        params.college = userCollege;
+      }
       if (isStudent) {
         params.department = userDept;
         params.year = userYr;
@@ -57,14 +63,17 @@ export default function Library() {
 
     const formData = new FormData();
     formData.append("pdf", file);
+    formData.append("college", userCollege || "ALL");
     formData.append("department", uploadDept);
     formData.append("year", uploadYear);
+    formData.append("uploaded_by", userEmail);
 
     try {
       setUploading(true);
       const response = await axios.post(`${API_BASE_URL}/upload-pdf`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
+
 
       if (response.data && response.data.status === false) {
         alert(response.data.message || "Failed to upload PDF.");

@@ -295,10 +295,10 @@ def profile(
 
 
 @app.get("/users")
-def users():
+def users(college: str | None = None):
 
+    return get_all_users(college=college)
 
-    return get_all_users()
 
 
 
@@ -575,8 +575,15 @@ async def upload_pdf(
         # Save record to database if available
         try:
             from database.connection import SessionLocal
-            from database.models import PDFDocument
+            from database.models import PDFDocument, User
             db = SessionLocal()
+
+            # If college is ALL or not set, look up uploader's college
+            if (not college or college == "ALL") and uploaded_by:
+                u = db.query(User).filter(User.email == uploaded_by).first()
+                if u and u.college:
+                    college = u.college
+
             existing = db.query(PDFDocument).filter(PDFDocument.filename == safe_filename).first()
             if not existing:
                 pdf_doc = PDFDocument(
@@ -592,6 +599,7 @@ async def upload_pdf(
             db.close()
         except Exception as db_err:
             print(f"⚠️ DB PDF Record note: {db_err}")
+
 
         # Trigger ingest on RAG service asynchronously
         def _trigger_rag_ingest(fname: str, clg: str, dept: str, yr: str):
@@ -674,18 +682,23 @@ def get_pdfs(
         doc_dept = info.get("department") or "ALL"
         doc_year = info.get("year") or "ALL"
 
-        # Filtering logic for Students: match college, department & year or ALL
-        if role == "student" or (college and department and year):
-            user_clg = (college or "").strip().lower()
+        # Filtering logic by College for ALL users if college param is provided
+        if college and college.strip() and college.upper() != "ALL":
+            user_clg_clean = re.sub(r'[^a-zA-Z0-9]', '', college).lower()
+            doc_clg_clean = re.sub(r'[^a-zA-Z0-9]', '', doc_college).lower() if doc_college else "all"
+            if doc_clg_clean != "all" and doc_clg_clean != user_clg_clean:
+                continue
+
+        # Filtering logic for Students / specific Dept & Year
+        if role == "student" or (department and year):
             user_dept = (department or "").strip().upper()
             user_yr = (year or "").strip().lower()
 
-            if user_clg and doc_college != "ALL" and re.sub(r'[^a-zA-Z0-9]', '', doc_college).lower() != re.sub(r'[^a-zA-Z0-9]', '', user_clg):
+            if user_dept and user_dept != "ALL" and doc_dept != "ALL" and doc_dept.upper() != user_dept:
                 continue
-            if user_dept and doc_dept != "ALL" and doc_dept.upper() != user_dept:
+            if user_yr and user_yr != "ALL" and doc_year != "ALL" and doc_year.lower() != user_yr:
                 continue
-            if user_yr and doc_year != "ALL" and doc_year.lower() != user_yr:
-                continue
+
 
         structured_files.append({
             "filename": fname,

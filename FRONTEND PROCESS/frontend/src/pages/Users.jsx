@@ -13,6 +13,8 @@ export default function Users() {
   const [search, setSearch] =
     useState("");
 
+  const userCollege = localStorage.getItem("college") || "";
+
   useEffect(() => {
 
     fetchUsers();
@@ -23,9 +25,15 @@ export default function Users() {
 
     try {
 
+      const params = {};
+      if (userCollege) {
+        params.college = userCollege;
+      }
+
       const response =
         await axios.get(
-          `${API_BASE_URL}/users`
+          `${API_BASE_URL}/users`,
+          { params }
         );
 
       setUsers(
@@ -38,6 +46,7 @@ export default function Users() {
 
     }
   };
+
 
   const deleteUser = async (
     userId

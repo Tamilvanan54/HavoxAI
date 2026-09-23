@@ -41,7 +41,9 @@ def get_user_by_id(user_id):
         db.close()
 
 
-def get_all_users():
+import re
+
+def get_all_users(college=None):
 
     db = SessionLocal()
 
@@ -51,14 +53,25 @@ def get_all_users():
 
         result = []
 
+        user_clg_clean = re.sub(r'[^a-zA-Z0-9]', '', college).lower() if college and college.strip() and college.upper() != "ALL" else None
+
         for user in users:
+
+            u_clg = getattr(user, "college", "") or ""
+
+            if user_clg_clean:
+                if not u_clg or re.sub(r'[^a-zA-Z0-9]', '', u_clg).lower() != user_clg_clean:
+                    continue
 
             result.append(
                 {
                     "id": user.id,
                     "name": user.name,
                     "email": user.email,
-                    "role": user.role
+                    "role": user.role,
+                    "college": u_clg,
+                    "department": getattr(user, "department", "") or "",
+                    "year": getattr(user, "year", "") or ""
                 }
             )
 
@@ -66,6 +79,7 @@ def get_all_users():
 
     finally:
         db.close()
+
 
 
 def delete_user(user_id):
