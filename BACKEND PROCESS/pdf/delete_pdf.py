@@ -1,18 +1,46 @@
 import os
 
-def delete_pdf(filename):
-    file_path = f"uploads/{filename}"
-    rag_data_path = os.path.join(os.path.dirname(__file__), "..", "..", "RAG PROCESS", "data", filename)
-
+def delete_pdf(filename: str):
     deleted_any = False
 
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        deleted_any = True
+    # 1. Delete record from database
+    try:
+        from database.connection import SessionLocal
+        from database.models import PDFDocument
+        db = SessionLocal()
+        docs = db.query(PDFDocument).filter(
+            (PDFDocument.filename == filename) | (PDFDocument.original_name == filename)
+        ).all()
+        for doc in docs:
+            db.delete(doc)
+            deleted_any = True
+        db.commit()
+        db.close()
+    except Exception as db_err:
+        print(f"⚠️ DB PDF delete note: {db_err}")
 
-    if os.path.exists(rag_data_path):
-        os.remove(rag_data_path)
-        deleted_any = True
+    # 2. Delete file from all upload & data directories
+    backend_dir = os.path.abspath(os.path.dirname(__file__))
+    search_dirs = [
+        os.path.join(backend_dir, "..", "uploads"),
+        os.path.join(backend_dir, "..", "..", "uploads"),
+        os.path.join(backend_dir, "..", "..", "RAG PROCESS", "data"),
+        "uploads",
+        "/root/HALLOW.AI/uploads",
+        "/root/HALLOW.AI/BACKEND PROCESS/uploads",
+        "/root/HALLOW.AI/RAG PROCESS/data"
+    ]
+
+    for d in search_dirs:
+        if os.path.exists(d):
+            target_path = os.path.join(d, filename)
+            if os.path.exists(target_path):
+                try:
+                    os.remove(target_path)
+                    deleted_any = True
+                    print(f"✓ Removed file '{target_path}'")
+                except Exception as e:
+                    print(f"⚠️ Failed to remove '{target_path}': {e}")
 
     if not deleted_any:
         return {

@@ -263,8 +263,19 @@ def build_unified_vectorstore() -> tuple[Chroma | None, set[str]]:
 
         disk_sources = {doc.metadata.get("source") for doc in docs if doc.metadata.get("source")}
         missing_docs = [doc for doc in docs if doc.metadata.get("source") not in indexed_sources]
+        stale_sources = indexed_sources - disk_sources
 
-        if not missing_docs and col.count() > 0:
+        if stale_sources:
+            print(f"🧹 Purging {len(stale_sources)} deleted PDFs from Chroma vectorstore: {list(stale_sources)}")
+            for stale in stale_sources:
+                try:
+                    col.delete(where={"source": stale})
+                    print(f"   ✓ Purged chunks for deleted file: {stale}")
+                except Exception as stale_err:
+                    print(f"   ⚠️ Stale purge note for '{stale}': {stale_err}")
+            indexed_sources -= stale_sources
+
+        if not missing_docs and not stale_sources and col.count() > 0:
             print(f"✅ Vector database up-to-date with {col.count()} chunks from {len(indexed_sources)} PDFs: {list(indexed_sources)}")
             return vectorstore, pdf_vocab
 
@@ -442,7 +453,7 @@ def handle_ingest(request: IngestRequest | None = None):
 
 @app.post("/api/delete-doc")
 def handle_delete_doc(request: DeleteDocRequest):
-    """Remove a document from ./data and rebuild vectorstore to remove its context completely."""
+    """Remove a document from ./data and purge its chunks from Chroma vectorstore."""
     global engine
     try:
         parse_pdf_college_dept_year.cache_clear()
@@ -459,8 +470,17 @@ def handle_delete_doc(request: DeleteDocRequest):
         except Exception as e:
             print(f"⚠️ Failed to delete '{rag_file_path}': {e}")
 
+    # Purge vectors directly from Chroma collection
+    if engine and engine.vectorstore:
+        try:
+            col = engine.vectorstore._collection
+            col.delete(where={"source": filename})
+            print(f"✓ Purged Chroma collection vectors for '{filename}'")
+        except Exception as purge_err:
+            print(f"⚠️ Chroma collection purge note: {purge_err}")
+
     chunks_count = reload_vectorstore()
-    return {"status": "success", "message": f"Deleted {filename} and updated vectorstore", "remaining_chunks": chunks_count}
+    return {"status": "success", "message": f"Deleted {filename} and purged vectorstore", "remaining_chunks": chunks_count}
 
 
 @app.post("/api/query")
