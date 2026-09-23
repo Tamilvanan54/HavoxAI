@@ -32,10 +32,7 @@ export default function Sidebar({
   const [uploadStatus, setUploadStatus] = useState("");
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("email");
-    localStorage.removeItem("activeChatId");
+    localStorage.clear();
     navigate("/");
   };
 

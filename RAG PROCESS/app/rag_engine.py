@@ -29,6 +29,39 @@ def get_installed_ollama_models() -> list[str]:
         pass
     return []
 
+def _norm_college(c: str | None) -> str:
+    if not c:
+        return "ALL"
+    s = re.sub(r'[^a-zA-Z0-9]', '', str(c)).upper()
+    return s if s else "ALL"
+
+def _norm_dept(d: str | None) -> str:
+    if not d:
+        return "ALL"
+    s = str(d).strip().upper()
+    match = re.search(r'^[A-Z0-9]+', s)
+    if match and match.group(0) in ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML", "CSBS", "MCT", "CHEM", "BIO", "AERO", "AUTO", "MARINE", "PROD", "TEXTILE", "ENV", "FOOD", "INSTRU", "INDUSTRIAL", "PETRO", "MINING", "METALLURGY", "ROBOTICS"]:
+        return match.group(0)
+    if "AIML" in s or "MACHINE" in s:
+        return "AIML"
+    if "AIDS" in s or "DATA SCIENCE" in s:
+        return "AIDS"
+    return re.sub(r'[^a-zA-Z0-9]', '', s)
+
+def _norm_year(y: str | None) -> str:
+    if not y:
+        return "ALL"
+    s = str(y).lower()
+    if "1" in s:
+        return "1ST YEAR"
+    if "2" in s:
+        return "2ND YEAR"
+    if "3" in s:
+        return "3RD YEAR"
+    if "4" in s:
+        return "4TH YEAR"
+    return s.upper().strip()
+
 def _colleges_match(c1: str | None, c2: str | None) -> bool:
     if not c1 or not c2:
         return True
@@ -54,8 +87,8 @@ def _colleges_match(c1: str | None, c2: str | None) -> bool:
 def _depts_match(d1: str | None, d2: str | None) -> bool:
     if not d1 or not d2:
         return True
-    s1 = _normalize_dept(d1)
-    s2 = _normalize_dept(d2)
+    s1 = _norm_dept(d1)
+    s2 = _norm_dept(d2)
     if s1 == "ALL" or s2 == "ALL" or not s1 or not s2:
         return True
     if s1 == s2 or s1 in s2 or s2 in s1:
@@ -65,8 +98,8 @@ def _depts_match(d1: str | None, d2: str | None) -> bool:
 def _years_match(y1: str | None, y2: str | None) -> bool:
     if not y1 or not y2:
         return True
-    s1 = _normalize_year(y1)
-    s2 = _normalize_year(y2)
+    s1 = _norm_year(y1)
+    s2 = _norm_year(y2)
     if s1 == "ALL" or s2 == "ALL" or not s1 or not s2:
         return True
     if s1 == s2:
@@ -313,30 +346,22 @@ class RAGEngine:
                 doc_dept = doc_dept or "ALL"
                 doc_year = doc_year or "ALL"
 
-                norm_u_clg = _normalize_college(user_college)
-                norm_u_dept = _normalize_dept(user_dept)
-                norm_u_year = _normalize_year(user_year)
-
-                norm_doc_clg = _normalize_college(doc_clg)
-                norm_doc_dept = _normalize_dept(doc_dept)
-                norm_doc_year = _normalize_year(doc_year)
-
-                # 1. COLLEGE CHECK: If doc belongs to a specific college, user's college MUST match!
-                if norm_doc_clg != "ALL":
-                    if norm_u_clg == "ALL" or norm_u_clg != norm_doc_clg:
-                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' college '{norm_doc_clg}' != User college '{norm_u_clg}'")
+                # 1. COLLEGE CHECK: User's college must match document college
+                if user_college and user_college.strip() and user_college.upper() != "ALL":
+                    if not _colleges_match(user_college, doc_clg):
+                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' college '{doc_clg}' != User college '{user_college}'")
                         return False
 
-                # 2. DEPARTMENT CHECK: If doc belongs to a specific department, user's department MUST match!
-                if norm_doc_dept != "ALL":
-                    if norm_u_dept == "ALL" or norm_u_dept != norm_doc_dept:
-                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' dept '{norm_doc_dept}' != User dept '{norm_u_dept}'")
+                # 2. DEPARTMENT CHECK: User's department must match document department
+                if user_dept and user_dept.strip() and user_dept.upper() != "ALL":
+                    if not _depts_match(user_dept, doc_dept):
+                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' dept '{doc_dept}' != User dept '{user_dept}'")
                         return False
 
-                # 3. YEAR CHECK: If doc belongs to a specific year, user's year MUST match!
-                if norm_doc_year != "ALL":
-                    if norm_u_year == "ALL" or norm_u_year != norm_doc_year:
-                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' year '{norm_doc_year}' != User year '{norm_u_year}'")
+                # 3. YEAR CHECK: User's year must match document year
+                if user_year and user_year.strip() and user_year.upper() != "ALL":
+                    if not _years_match(user_year, doc_year):
+                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' year '{doc_year}' != User year '{user_year}'")
                         return False
 
                 return True

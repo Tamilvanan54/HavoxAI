@@ -58,17 +58,9 @@ currentChatId
 
 
   const logout = () => {
-
-  localStorage.removeItem("token");
-  localStorage.removeItem("role");
-  localStorage.removeItem("email");
-
-  // IMPORTANT
-  localStorage.removeItem("activeChatId");
-
-  navigate("/");
-
-};
+    localStorage.clear();
+    navigate("/");
+  };
 
 
 

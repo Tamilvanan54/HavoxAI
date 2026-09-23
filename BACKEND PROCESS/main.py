@@ -49,6 +49,8 @@ from pdf.delete_pdf import delete_pdf
 
 import os
 import requests
+import re
+
 
 
 
@@ -585,7 +587,13 @@ async def upload_pdf(
                     college = u.college
 
             existing = db.query(PDFDocument).filter(PDFDocument.filename == safe_filename).first()
-            if not existing:
+            if existing:
+                existing.original_name = pdf.filename
+                existing.college = college or "ALL"
+                existing.department = department or "ALL"
+                existing.year = year or "ALL"
+                existing.uploaded_by = uploaded_by
+            else:
                 pdf_doc = PDFDocument(
                     filename=safe_filename,
                     original_name=pdf.filename,
@@ -595,7 +603,7 @@ async def upload_pdf(
                     uploaded_by=uploaded_by
                 )
                 db.add(pdf_doc)
-                db.commit()
+            db.commit()
             db.close()
         except Exception as db_err:
             print(f"⚠️ DB PDF Record note: {db_err}")
@@ -728,80 +736,103 @@ def get_pdfs(
     year: str | None = None,
     role: str | None = None
 ):
-    backend_dir = os.path.abspath(os.path.dirname(__file__))
-    search_dirs = [
-        os.path.join(backend_dir, "uploads"),
-        os.path.join(backend_dir, "..", "uploads"),
-        os.path.join(backend_dir, "..", "RAG PROCESS", "data"),
-        "uploads",
-        "/root/HALLOW.AI/uploads",
-        "/root/HALLOW.AI/BACKEND PROCESS/uploads",
-        "/root/HALLOW.AI/RAG PROCESS/data"
-    ]
-
-    all_files_set = set()
-    for d in search_dirs:
-        if os.path.exists(d):
-            try:
-                for f in os.listdir(d):
-                    if f.endswith(".pdf"):
-                        all_files_set.add(f)
-            except Exception:
-                pass
-
-    all_files = list(all_files_set)
-
-    # Query database for college, department & year metadata if available
-    db_metadata = {}
     try:
-        from database.connection import SessionLocal
-        from database.models import PDFDocument
-        db = SessionLocal()
-        docs = db.query(PDFDocument).all()
-        for doc in docs:
-            db_metadata[doc.filename] = {
-                "college": getattr(doc, "college", "ALL") or "ALL",
-                "department": doc.department or "ALL",
-                "year": doc.year or "ALL",
-                "original_name": doc.original_name
-            }
-        db.close()
-    except Exception as db_err:
-        print(f"⚠️ DB PDF metadata fetch note: {db_err}")
+        backend_dir = os.path.abspath(os.path.dirname(__file__))
+        search_dirs = [
+            os.path.join(backend_dir, "uploads"),
+            os.path.join(backend_dir, "..", "uploads"),
+            os.path.join(backend_dir, "..", "RAG PROCESS", "data"),
+            "uploads",
+            "/root/HALLOW.AI/uploads",
+            "/root/HALLOW.AI/BACKEND PROCESS/uploads",
+            "/root/HALLOW.AI/RAG PROCESS/data"
+        ]
 
-    structured_files = []
-    for fname in all_files:
-        info = db_metadata.get(fname, {})
-        doc_college = info.get("college") or "ALL"
-        doc_dept = info.get("department") or "ALL"
-        doc_year = info.get("year") or "ALL"
+        all_files_set = set()
+        for d in search_dirs:
+            if os.path.exists(d):
+                try:
+                    for f in os.listdir(d):
+                        if f.endswith(".pdf"):
+                            all_files_set.add(f)
+                except Exception:
+                    pass
 
-        # 1. Filtering by College for ALL users
-        if college and college.strip() and college.upper() != "ALL":
-            if not _colleges_match(college, doc_college):
-                continue
+        all_files = list(all_files_set)
 
-        # 2. Filtering for Students (Department & Year)
-        if role == "student":
-            if department and not _depts_match(department, doc_dept):
-                continue
-            if year and not _years_match(year, doc_year):
-                continue
+        # Query database for college, department & year metadata if available
+        db_metadata = {}
+        try:
+            from database.connection import SessionLocal
+            from database.models import PDFDocument
+            db = SessionLocal()
+            docs = db.query(PDFDocument).all()
+            for doc in docs:
+                db_metadata[doc.filename] = {
+                    "college": getattr(doc, "college", "ALL") or "ALL",
+                    "department": doc.department or "ALL",
+                    "year": doc.year or "ALL",
+                    "original_name": doc.original_name
+                }
+            db.close()
+        except Exception as db_err:
+            print(f"⚠️ DB PDF metadata fetch note: {db_err}")
 
-        structured_files.append({
-            "filename": fname,
-            "college": doc_college,
-            "department": doc_dept,
-            "year": doc_year
-        })
+        structured_files = []
+        for fname in all_files:
+            info = db_metadata.get(fname, {})
+            doc_college = info.get("college") or "ALL"
+            doc_dept = info.get("department") or "ALL"
+            doc_year = info.get("year") or "ALL"
 
-    file_names = [item["filename"] for item in structured_files]
+            if doc_college == "ALL" or doc_dept == "ALL" or doc_year == "ALL":
+                try:
+                    import sys
+                    rag_path = os.path.abspath(os.path.join(backend_dir, "..", "RAG PROCESS"))
+                    if rag_path not in sys.path:
+                        sys.path.insert(0, rag_path)
+                    from main import parse_pdf_college_dept_year
+                    pc, pd, py = parse_pdf_college_dept_year(fname)
+                    if doc_college == "ALL": doc_college = pc
+                    if doc_dept == "ALL": doc_dept = pd
+                    if doc_year == "ALL": doc_year = py
+                except Exception:
+                    pass
 
-    return {
-        "status": True,
-        "files": file_names,
-        "details": structured_files
-    }
+            # 1. Filtering by College for ALL users
+            if college and college.strip() and college.upper() != "ALL":
+                if not _colleges_match(college, doc_college):
+                    continue
+
+            # 2. Filtering for Students (Department & Year)
+            if role == "student":
+                if department and not _depts_match(department, doc_dept):
+                    continue
+                if year and not _years_match(year, doc_year):
+                    continue
+
+            structured_files.append({
+                "filename": fname,
+                "college": doc_college,
+                "department": doc_dept,
+                "year": doc_year
+            })
+
+        file_names = [item["filename"] for item in structured_files]
+
+        return {
+            "status": True,
+            "files": file_names,
+            "details": structured_files
+        }
+    except Exception as exc:
+        print(f"❌ Error in get_pdfs: {exc}")
+        return {
+            "status": True,
+            "files": [],
+            "details": []
+        }
+
 
 
 

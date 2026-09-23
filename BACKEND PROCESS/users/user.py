@@ -44,12 +44,18 @@ def get_user_by_id(user_id):
 import re
 
 def _colleges_match(c1: str | None, c2: str | None) -> bool:
-    if not c1 or not c2:
+    if not c1:
         return True
+    if not c2:
+        return False
     s1 = (c1 or "").strip().lower()
     s2 = (c2 or "").strip().lower()
-    if s1 == "all" or s2 == "all" or not s1 or not s2:
+    if s1 == "all":
         return True
+    if s2 == "all":
+        return False
+    if not s1 or not s2:
+        return False
     
     norm1 = re.sub(r'[^a-zA-Z0-9]', '', s1)
     norm2 = re.sub(r'[^a-zA-Z0-9]', '', s2)
