@@ -27,11 +27,15 @@ warnings.filterwarnings("ignore")
 
 load_dotenv()
 
+from functools import lru_cache
+
 # Global RAG Engine instance
 engine: RAGEngine | None = None
 CHROMA_PERSIST_DIR = "./chroma_db"
 
+@lru_cache(maxsize=500)
 def parse_pdf_college_dept_year(file_name: str) -> tuple[str, str, str]:
+
     """Parse college, department, and year metadata from database or filename."""
     base_name = os.path.basename(file_name)
     clg = "ALL"
@@ -420,6 +424,10 @@ def health_check():
 def handle_ingest(request: IngestRequest | None = None):
     """Ingest newly uploaded documents from ./data folder into Chroma vectorstore asynchronously."""
     global engine
+    try:
+        parse_pdf_college_dept_year.cache_clear()
+    except Exception:
+        pass
     import threading
     def _async_ingest():
         try:
@@ -436,6 +444,10 @@ def handle_ingest(request: IngestRequest | None = None):
 def handle_delete_doc(request: DeleteDocRequest):
     """Remove a document from ./data and rebuild vectorstore to remove its context completely."""
     global engine
+    try:
+        parse_pdf_college_dept_year.cache_clear()
+    except Exception:
+        pass
     filename = request.filename
     print(f"🗑️ Deleting document from RAG: {filename}")
 
@@ -449,6 +461,7 @@ def handle_delete_doc(request: DeleteDocRequest):
 
     chunks_count = reload_vectorstore()
     return {"status": "success", "message": f"Deleted {filename} and updated vectorstore", "remaining_chunks": chunks_count}
+
 
 @app.post("/api/query")
 def handle_query(request: QueryRequest):
