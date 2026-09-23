@@ -728,10 +728,28 @@ def get_pdfs(
     year: str | None = None,
     role: str | None = None
 ):
-    if not os.path.exists("uploads"):
-        os.makedirs("uploads")
+    backend_dir = os.path.abspath(os.path.dirname(__file__))
+    search_dirs = [
+        os.path.join(backend_dir, "uploads"),
+        os.path.join(backend_dir, "..", "uploads"),
+        os.path.join(backend_dir, "..", "RAG PROCESS", "data"),
+        "uploads",
+        "/root/HALLOW.AI/uploads",
+        "/root/HALLOW.AI/BACKEND PROCESS/uploads",
+        "/root/HALLOW.AI/RAG PROCESS/data"
+    ]
 
-    all_files = [f for f in os.listdir("uploads") if f.endswith(".pdf")]
+    all_files_set = set()
+    for d in search_dirs:
+        if os.path.exists(d):
+            try:
+                for f in os.listdir(d):
+                    if f.endswith(".pdf"):
+                        all_files_set.add(f)
+            except Exception:
+                pass
+
+    all_files = list(all_files_set)
 
     # Query database for college, department & year metadata if available
     db_metadata = {}
@@ -770,7 +788,6 @@ def get_pdfs(
             if year and not _years_match(year, doc_year):
                 continue
 
-
         structured_files.append({
             "filename": fname,
             "college": doc_college,
@@ -785,6 +802,7 @@ def get_pdfs(
         "files": file_names,
         "details": structured_files
     }
+
 
 
 
@@ -834,14 +852,23 @@ def remove_pdf(
 
 @app.get("/view-pdf/{filename}")
 def view_pdf(filename: str):
+    backend_dir = os.path.abspath(os.path.dirname(__file__))
+    search_dirs = [
+        os.path.join(backend_dir, "uploads"),
+        os.path.join(backend_dir, "..", "uploads"),
+        os.path.join(backend_dir, "..", "RAG PROCESS", "data"),
+        "uploads",
+        "/root/HALLOW.AI/uploads",
+        "/root/HALLOW.AI/BACKEND PROCESS/uploads",
+        "/root/HALLOW.AI/RAG PROCESS/data"
+    ]
+    for d in search_dirs:
+        fp = os.path.join(d, filename)
+        if os.path.exists(fp):
+            return FileResponse(path=fp, media_type="application/pdf", filename=filename)
 
-    file_path = f"uploads/{filename}"
+    raise HTTPException(status_code=404, detail="File not found")
 
-    return FileResponse(
-        path=file_path,
-        media_type="application/pdf",
-        filename=filename
-    )
 
 
 
