@@ -186,7 +186,11 @@ export default function Users() {
             </th>
 
             <th style={thStyle}>
-              Action
+              Profile
+            </th>
+
+            <th style={thStyle}>
+              Delete
             </th>
           </tr>
         </thead>
@@ -256,43 +260,43 @@ export default function Users() {
                     </span>
                   </td>
 
+                  {/* Profile */}
                   <td style={tdStyle}>
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                      {/* View Profile */}
-                      <button
-                        onClick={() => navigate(`/user-profile/${user.id}`)}
-                        title="View Profile"
-                        style={{
-                          background: "#3b82f6",
-                          color: "white",
-                          border: "none",
-                          padding: "8px 16px",
-                          borderRadius: "8px",
-                          cursor: "pointer",
-                          fontSize: "18px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        →
-                      </button>
+                    <button
+                      onClick={() => navigate(`/user-profile/${user.id}`)}
+                      title="View Profile"
+                      style={{
+                        background: "#3b82f6",
+                        color: "white",
+                        border: "none",
+                        padding: "8px 16px",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "18px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      →
+                    </button>
+                  </td>
 
-                      {/* Delete User */}
-                      <button
-                        onClick={() => deleteUser(user.id)}
-                        title="Delete User"
-                        style={{
-                          background: "#ef4444",
-                          color: "white",
-                          border: "none",
-                          padding: "8px 14px",
-                          borderRadius: "8px",
-                          cursor: "pointer",
-                          fontSize: "16px",
-                        }}
-                      >
-                        🗑
-                      </button>
-                    </div>
+                  {/* Delete */}
+                  <td style={tdStyle}>
+                    <button
+                      onClick={() => deleteUser(user.id)}
+                      title="Delete User"
+                      style={{
+                        background: "#ef4444",
+                        color: "white",
+                        border: "none",
+                        padding: "8px 14px",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                        fontSize: "16px",
+                      }}
+                    >
+                      🗑
+                    </button>
                   </td>
                 </tr>
               )

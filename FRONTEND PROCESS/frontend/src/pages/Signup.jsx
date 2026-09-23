@@ -1,8 +1,69 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../config/api";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+
+const TN_COLLEGES = [
+  "Anna University, Chennai",
+  "IIT Madras",
+  "NIT Trichy (National Institute of Technology)",
+  "VIT (Vellore Institute of Technology)",
+  "SRM Institute of Science and Technology",
+  "Amrita School of Engineering",
+  "PSG College of Technology, Coimbatore",
+  "SSN College of Engineering, Chennai",
+  "Coimbatore Institute of Technology",
+  "Thiagarajar College of Engineering, Madurai",
+  "Kumaraguru College of Technology, Coimbatore",
+  "Kongu Engineering College, Erode",
+  "Bannari Amman Institute of Technology",
+  "Sri Venkateswara College of Engineering",
+  "Rajalakshmi Engineering College, Chennai",
+  "Saveetha Engineering College, Chennai",
+  "Sathyabama Institute of Science and Technology",
+  "Mepco Schlenk Engineering College, Virudhunagar",
+  "Kamaraj College of Engineering and Technology, Madurai",
+  "Vel Tech University, Chennai",
+  "Government College of Engineering, Salem",
+  "Government College of Engineering, Tirunelveli",
+  "Government College of Engineering, Srirangam",
+  "Karpagam Academy of Higher Education, Coimbatore",
+  "Sri Ramakrishna Engineering College, Coimbatore",
+  "Velammal Engineering College, Chennai",
+  "Panimalar Engineering College, Chennai",
+  "Sri Krishna College of Engineering and Technology",
+  "KSR College of Engineering, Tiruchengode",
+  "SNS College of Technology, Coimbatore",
+  "KCG College of Technology, Chennai",
+  "Easwari Engineering College, Chennai",
+  "St. Joseph's College of Engineering, Chennai",
+  "RMK College of Engineering, Chennai",
+  "Tagore Engineering College, Chennai",
+  "National Engineering College, Kovilpatti",
+  "B.S. Abdur Rahman Crescent Institute of S&T",
+  "Sethu Institute of Technology, Kariapatti",
+  "Kalasalingam Academy of Research and Education",
+  "Francis Xavier Engineering College, Tirunelveli",
+  "Nandha Engineering College, Erode",
+  "Paavai Engineering College, Namakkal",
+  "Erode Sengunthar Engineering College",
+  "Dr. NGP Institute of Technology, Coimbatore",
+  "K.Ramakrishnan College of Engineering, Trichy",
+  "Saranathan College of Engineering, Trichy",
+  "Sri Eshwar College of Engineering, Coimbatore",
+  "Nehru Institute of Technology, Coimbatore",
+  "Hindusthan College of Engineering and Technology",
+  "Alagappa Chettiar Government College of Engg & Tech",
+  "PSN College of Engineering and Technology, Tirunelveli",
+  "Agni College of Technology, Chennai",
+  "Jerusalem College of Engineering, Chennai",
+  "M.A.M. College of Engineering, Trichy",
+  "Adhiparasakthi Engineering College",
+  "Excel College of Engineering and Technology",
+  "Park College of Engineering and Technology, Coimbatore",
+  "Other",
+];
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -18,10 +79,24 @@ export default function Signup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState(roleParam);
   const [college, setCollege] = useState("");
+  const [collegeSearch, setCollegeSearch] = useState("");
+  const [showCollegeDropdown, setShowCollegeDropdown] = useState(false);
+  const collegeRef = useRef(null);
   const [department, setDepartment] = useState("CSE");
   const [year, setYear] = useState("3rd Year");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (collegeRef.current && !collegeRef.current.contains(e.target)) {
+        setShowCollegeDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   useEffect(() => {
     if (roleParam) {
@@ -251,82 +326,79 @@ export default function Signup() {
           </button>
         </div>
 
-        {/* COLLEGE DROPDOWN - Tamil Nadu Engineering Colleges */}
-        <div style={{ marginBottom: "12px" }}>
-          <select
-            value={college}
-            onChange={(e) => setCollege(e.target.value)}
+        {/* COLLEGE — Searchable Combobox */}
+        <div style={{ marginBottom: "12px", position: "relative" }} ref={collegeRef}>
+          <input
+            type="text"
+            placeholder="Search College..."
+            value={college || collegeSearch}
+            onFocus={() => {
+              setCollegeSearch(college || "");
+              setCollege("");
+              setShowCollegeDropdown(true);
+            }}
+            onChange={(e) => {
+              setCollegeSearch(e.target.value);
+              setCollege("");
+              setShowCollegeDropdown(true);
+            }}
             style={{
               width: "100%",
               padding: "12px 14px",
               background: "#262626",
-              color: college ? "white" : "#9ca3af",
+              color: "white",
               border: "1px solid #404040",
               borderRadius: "10px",
               outline: "none",
-              boxSizing: "border-box"
+              boxSizing: "border-box",
+              fontSize: "14px"
             }}
-          >
-            <option value="">-- Select College --</option>
-            <option value="Anna University">Anna University, Chennai</option>
-            <option value="IIT Madras">IIT Madras</option>
-            <option value="NIT Trichy">NIT Trichy (National Institute of Technology)</option>
-            <option value="VIT Vellore">VIT (Vellore Institute of Technology)</option>
-            <option value="SRM Institute">SRM Institute of Science and Technology</option>
-            <option value="Amrita School of Engineering">Amrita School of Engineering</option>
-            <option value="PSG College of Technology">PSG College of Technology, Coimbatore</option>
-            <option value="SSN College of Engineering">SSN College of Engineering, Chennai</option>
-            <option value="Coimbatore Institute of Technology">Coimbatore Institute of Technology</option>
-            <option value="Thiagarajar College of Engineering">Thiagarajar College of Engineering, Madurai</option>
-            <option value="Kumaraguru College of Technology">Kumaraguru College of Technology, Coimbatore</option>
-            <option value="Kongu Engineering College">Kongu Engineering College, Erode</option>
-            <option value="Bannari Amman Institute of Technology">Bannari Amman Institute of Technology</option>
-            <option value="Sri Venkateswara College of Engineering">Sri Venkateswara College of Engineering</option>
-            <option value="Rajalakshmi Engineering College">Rajalakshmi Engineering College, Chennai</option>
-            <option value="Saveetha Engineering College">Saveetha Engineering College, Chennai</option>
-            <option value="Sathyabama Institute">Sathyabama Institute of Science and Technology</option>
-            <option value="Mepco Schlenk Engineering College">Mepco Schlenk Engineering College, Virudhunagar</option>
-            <option value="Kamaraj College of Engineering">Kamaraj College of Engineering and Technology, Madurai</option>
-            <option value="Vel Tech University">Vel Tech University, Chennai</option>
-            <option value="Government College of Engineering Salem">Government College of Engineering, Salem</option>
-            <option value="Government College of Engineering Tirunelveli">Government College of Engineering, Tirunelveli</option>
-            <option value="Government College of Engineering Srirangam">Government College of Engineering, Srirangam</option>
-            <option value="Karpagam Academy">Karpagam Academy of Higher Education, Coimbatore</option>
-            <option value="Sri Ramakrishna Engineering College">Sri Ramakrishna Engineering College, Coimbatore</option>
-            <option value="Velammal Engineering College">Velammal Engineering College, Chennai</option>
-            <option value="Panimalar Engineering College">Panimalar Engineering College, Chennai</option>
-            <option value="Sri Krishna College of Engineering">Sri Krishna College of Engineering and Technology</option>
-            <option value="KSR College of Engineering">KSR College of Engineering, Tiruchengode</option>
-            <option value="SNS College of Technology">SNS College of Technology, Coimbatore</option>
-            <option value="KCG College of Technology">KCG College of Technology, Chennai</option>
-            <option value="Easwari Engineering College">Easwari Engineering College, Chennai</option>
-            <option value="St. Joseph's College of Engineering">St. Joseph's College of Engineering, Chennai</option>
-            <option value="RMK College of Engineering">RMK College of Engineering, Chennai</option>
-            <option value="Tagore Engineering College">Tagore Engineering College, Chennai</option>
-            <option value="National Engineering College">National Engineering College, Kovilpatti</option>
-            <option value="B.S. Abdur Rahman Crescent">B.S. Abdur Rahman Crescent Institute of S&T</option>
-            <option value="Sethu Institute of Technology">Sethu Institute of Technology, Kariapatti</option>
-            <option value="Kalasalingam Academy">Kalasalingam Academy of Research and Education</option>
-            <option value="Francis Xavier Engineering College">Francis Xavier Engineering College, Tirunelveli</option>
-            <option value="Nandha Engineering College">Nandha Engineering College, Erode</option>
-            <option value="Paavai Engineering College">Paavai Engineering College, Namakkal</option>
-            <option value="Erode Sengunthar Engineering College">Erode Sengunthar Engineering College</option>
-            <option value="Dr. NGP Institute of Technology">Dr. NGP Institute of Technology, Coimbatore</option>
-            <option value="K.Ramakrishnan College of Engineering">K.Ramakrishnan College of Engineering, Trichy</option>
-            <option value="Saranathan College of Engineering">Saranathan College of Engineering, Trichy</option>
-            <option value="Sri Eshwar College of Engineering">Sri Eshwar College of Engineering, Coimbatore</option>
-            <option value="Nehru Institute of Technology">Nehru Institute of Technology, Coimbatore</option>
-            <option value="Hindusthan College of Engineering">Hindusthan College of Engineering and Technology</option>
-            <option value="Alagappa Chettiar Government College">Alagappa Chettiar Government College of Engg & Tech</option>
-            <option value="PSN College of Engineering">PSN College of Engineering and Technology, Tirunelveli</option>
-            <option value="Agni College of Technology">Agni College of Technology, Chennai</option>
-            <option value="Jerusalem College of Engineering">Jerusalem College of Engineering, Chennai</option>
-            <option value="M.A.M. College of Engineering">M.A.M. College of Engineering, Trichy</option>
-            <option value="Adhiparasakthi Engineering College">Adhiparasakthi Engineering College</option>
-            <option value="Excel College of Engineering">Excel College of Engineering and Technology</option>
-            <option value="Park College of Engineering">Park College of Engineering and Technology, Coimbatore</option>
-            <option value="Other">Other</option>
-          </select>
+          />
+          {showCollegeDropdown && (
+            <div style={{
+              position: "absolute",
+              top: "100%",
+              left: 0,
+              right: 0,
+              background: "#1e1e1e",
+              border: "1px solid #404040",
+              borderRadius: "10px",
+              maxHeight: "220px",
+              overflowY: "auto",
+              zIndex: 999,
+              marginTop: "4px"
+            }}>
+              {TN_COLLEGES
+                .filter(c => c.toLowerCase().includes((collegeSearch || "").toLowerCase()))
+                .map((c, i) => (
+                  <div
+                    key={i}
+                    onMouseDown={() => {
+                      setCollege(c);
+                      setCollegeSearch("");
+                      setShowCollegeDropdown(false);
+                    }}
+                    style={{
+                      padding: "10px 14px",
+                      color: "white",
+                      cursor: "pointer",
+                      fontSize: "13px",
+                      borderBottom: "1px solid #2a2a2a"
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#2a2a2a"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    {c}
+                  </div>
+                ))
+              }
+              {TN_COLLEGES.filter(c => c.toLowerCase().includes((collegeSearch || "").toLowerCase())).length === 0 && (
+                <div style={{ padding: "10px 14px", color: "#9ca3af", fontSize: "13px" }}>
+                  No college found
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* DEPARTMENT — Students only */}
