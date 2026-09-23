@@ -366,7 +366,7 @@ class RAGEngine:
                     if rag_dir not in sys.path:
                         sys.path.insert(0, rag_dir)
                     from main import load_all_pdfs
-                    all_chunks, _ = load_all_pdfs()
+                    all_chunks, _ = load_all_pdfs(force_reload=False)
                     for chunk in all_chunks:
                         if not _is_doc_allowed(chunk):
                             continue
