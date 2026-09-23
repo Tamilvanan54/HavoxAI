@@ -38,15 +38,8 @@ def create_user(
         # Role normalize
         role = role.lower()
 
-        # Admin account creation block
-        if role == "admin":
-            return {
-                "status": False,
-                "message": "Admin account cannot be created via signup."
-            }
-
-        # Allow only student and staff
-        if role not in ["student", "staff"]:
+        # Allow only student, staff, and admin
+        if role not in ["student", "staff", "admin"]:
             return {
                 "status": False,
                 "message": "Invalid role selected"
