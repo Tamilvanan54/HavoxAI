@@ -640,10 +640,42 @@ async def upload_pdf(
         }
 
 
+def _norm_college(c: str | None) -> str:
+    if not c:
+        return "ALL"
+    s = re.sub(r'[^a-zA-Z0-9]', '', str(c)).upper()
+    return s if s else "ALL"
+
+def _norm_dept(d: str | None) -> str:
+    if not d:
+        return "ALL"
+    s = str(d).strip().upper()
+    match = re.search(r'^[A-Z0-9]+', s)
+    if match and match.group(0) in ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML", "CSBS", "MCT", "CHEM", "BIO", "AERO", "AUTO", "MARINE", "PROD", "TEXTILE", "ENV", "FOOD", "INSTRU", "INDUSTRIAL", "PETRO", "MINING", "METALLURGY", "ROBOTICS"]:
+        return match.group(0)
+    if "AIML" in s or "MACHINE" in s:
+        return "AIML"
+    if "AIDS" in s or "DATA SCIENCE" in s:
+        return "AIDS"
+    return re.sub(r'[^a-zA-Z0-9]', '', s)
+
+def _norm_year(y: str | None) -> str:
+    if not y:
+        return "ALL"
+    s = str(y).lower()
+    if "1" in s:
+        return "1ST YEAR"
+    if "2" in s:
+        return "2ND YEAR"
+    if "3" in s:
+        return "3RD YEAR"
+    if "4" in s:
+        return "4TH YEAR"
+    return s.upper().strip()
+
 # ==========================
 # GET PDFS
 # ==========================
-
 
 @app.get("/pdfs")
 def get_pdfs(
@@ -682,23 +714,24 @@ def get_pdfs(
         doc_dept = info.get("department") or "ALL"
         doc_year = info.get("year") or "ALL"
 
-        # Filtering logic by College for ALL users if college param is provided
+        # 1. Filtering by College for ALL users
         if college and college.strip() and college.upper() != "ALL":
-            user_clg_clean = re.sub(r'[^a-zA-Z0-9]', '', college).lower()
-            doc_clg_clean = re.sub(r'[^a-zA-Z0-9]', '', doc_college).lower() if doc_college else "all"
-            if doc_clg_clean != "all" and doc_clg_clean != user_clg_clean:
+            u_clg_norm = _norm_college(college)
+            d_clg_norm = _norm_college(doc_college)
+            if d_clg_norm != "ALL" and d_clg_norm != u_clg_norm:
                 continue
 
-        # Filtering logic for Students / specific Dept & Year
-        if role == "student" or (department and year):
-            user_dept = (department or "").strip().upper()
-            user_yr = (year or "").strip().lower()
+        # 2. Filtering for Students (Department & Year)
+        if role == "student":
+            u_dept_norm = _norm_dept(department)
+            u_year_norm = _norm_year(year)
+            d_dept_norm = _norm_dept(doc_dept)
+            d_year_norm = _norm_year(doc_year)
 
-            if user_dept and user_dept != "ALL" and doc_dept != "ALL" and doc_dept.upper() != user_dept:
+            if u_dept_norm != "ALL" and d_dept_norm != "ALL" and d_dept_norm != u_dept_norm:
                 continue
-            if user_yr and user_yr != "ALL" and doc_year != "ALL" and doc_year.lower() != user_yr:
+            if u_year_norm != "ALL" and d_year_norm != "ALL" and d_year_norm != u_year_norm:
                 continue
-
 
         structured_files.append({
             "filename": fname,
@@ -707,7 +740,6 @@ def get_pdfs(
             "year": doc_year
         })
 
-    # Simple string list fallback for backward compatibility
     file_names = [item["filename"] for item in structured_files]
 
     return {
@@ -715,6 +747,7 @@ def get_pdfs(
         "files": file_names,
         "details": structured_files
     }
+
 
 
 # ==========================
