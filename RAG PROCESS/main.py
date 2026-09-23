@@ -39,45 +39,51 @@ def parse_pdf_college_dept_year(file_name: str) -> tuple[str, str, str]:
     year = "ALL"
 
     try:
-        sys_path_save = list(sys.path)
         backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "BACKEND PROCESS"))
         if backend_dir not in sys.path:
             sys.path.insert(0, backend_dir)
         from database.connection import SessionLocal
-        from database.models import PDFDocument
+        from database.models import PDFDocument, User
         db = SessionLocal()
         doc = db.query(PDFDocument).filter(PDFDocument.filename == base_name).first()
         if doc:
             clg = getattr(doc, "college", "ALL") or "ALL"
             dept = doc.department or "ALL"
             year = doc.year or "ALL"
+            if (clg == "ALL" or not clg) and getattr(doc, "uploaded_by", None):
+                u = db.query(User).filter(User.email == doc.uploaded_by).first()
+                if u and u.college:
+                    clg = u.college
         db.close()
     except Exception:
         pass
 
-    if clg == "ALL" and dept == "ALL" and year == "ALL":
+    if dept == "ALL" or year == "ALL":
         parts = base_name.split("_")
         known_depts = ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML"]
         for p in parts:
             p_upper = p.upper()
-            if p_upper in known_depts:
-                dept = p_upper
-            elif "AIML" in p_upper or "AIANDML" in p_upper:
-                dept = "AIML"
-            elif "AIDS" in p_upper:
-                dept = "AIDS"
+            if dept == "ALL":
+                if p_upper in known_depts:
+                    dept = p_upper
+                elif "AIML" in p_upper or "AIANDML" in p_upper:
+                    dept = "AIML"
+                elif "AIDS" in p_upper:
+                    dept = "AIDS"
 
             p_lower = p.lower()
-            if "1st" in p_lower or "1year" in p_lower:
-                year = "1st Year"
-            elif "2nd" in p_lower or "2year" in p_lower:
-                year = "2nd Year"
-            elif "3rd" in p_lower or "3year" in p_lower:
-                year = "3rd Year"
-            elif "4th" in p_lower or "4year" in p_lower:
-                year = "4th Year"
+            if year == "ALL":
+                if "1st" in p_lower or "1year" in p_lower:
+                    year = "1st Year"
+                elif "2nd" in p_lower or "2year" in p_lower:
+                    year = "2nd Year"
+                elif "3rd" in p_lower or "3year" in p_lower:
+                    year = "3rd Year"
+                elif "4th" in p_lower or "4year" in p_lower:
+                    year = "4th Year"
 
     return clg, dept, year
+
 
 def extract_pdf_documents(pdf_path: str) -> list[Document]:
     """Extract text page-by-page using PyMuPDF (fitz) with PyPDF2 and Tesseract OCR fallbacks."""

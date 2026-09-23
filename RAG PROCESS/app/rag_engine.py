@@ -272,51 +272,56 @@ class RAGEngine:
             results = []
             seen_contents = set()
 
-            def _is_doc_allowed_for_student(doc) -> bool:
+            def _is_doc_allowed(doc) -> bool:
                 doc_name = doc.metadata.get("source", "")
                 doc_clg = doc.metadata.get("college")
                 doc_dept = doc.metadata.get("department")
                 doc_year = doc.metadata.get("year")
 
-                if not doc_clg or not doc_dept or not doc_year or doc_dept == "ALL":
-                    try:
-                        import sys
-                        rag_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-                        if rag_dir not in sys.path:
-                            sys.path.insert(0, rag_dir)
-                        from main import parse_pdf_college_dept_year
-                        parsed_c, parsed_d, parsed_y = parse_pdf_college_dept_year(doc_name)
-                        doc_clg = doc_clg or parsed_c
-                        doc_dept = doc_dept or parsed_d
-                        doc_year = doc_year or parsed_y
-                    except Exception:
-                        pass
+                try:
+                    import sys
+                    rag_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+                    if rag_dir not in sys.path:
+                        sys.path.insert(0, rag_dir)
+                    from main import parse_pdf_college_dept_year
+                    parsed_c, parsed_d, parsed_y = parse_pdf_college_dept_year(doc_name)
+                    if not doc_clg or doc_clg == "ALL":
+                        doc_clg = parsed_c
+                    if not doc_dept or doc_dept == "ALL":
+                        doc_dept = parsed_d
+                    if not doc_year or doc_year == "ALL":
+                        doc_year = parsed_y
+                except Exception:
+                    pass
 
                 doc_clg = doc_clg or "ALL"
                 doc_dept = doc_dept or "ALL"
                 doc_year = doc_year or "ALL"
 
-                # Strict Access Control Check for Student
-                is_student = (user_role and user_role.lower() == "student") or (user_dept and user_dept.upper() != "ALL")
-                if is_student:
-                    norm_u_clg = _normalize_college(user_college)
-                    norm_u_dept = _normalize_dept(user_dept)
-                    norm_u_year = _normalize_year(user_year)
+                norm_u_clg = _normalize_college(user_college)
+                norm_u_dept = _normalize_dept(user_dept)
+                norm_u_year = _normalize_year(user_year)
 
-                    norm_doc_clg = _normalize_college(doc_clg)
-                    norm_doc_dept = _normalize_dept(doc_dept)
-                    norm_doc_year = _normalize_year(doc_year)
+                norm_doc_clg = _normalize_college(doc_clg)
+                norm_doc_dept = _normalize_dept(doc_dept)
+                norm_doc_year = _normalize_year(doc_year)
 
-                    if norm_doc_clg != "ALL" and norm_u_clg != "ALL" and norm_doc_clg != norm_u_clg:
-                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' college '{norm_doc_clg}' != Student college '{norm_u_clg}'")
+                # 1. COLLEGE CHECK: If doc belongs to a specific college, user's college MUST match!
+                if norm_doc_clg != "ALL":
+                    if norm_u_clg == "ALL" or norm_u_clg != norm_doc_clg:
+                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' college '{norm_doc_clg}' != User college '{norm_u_clg}'")
                         return False
 
-                    if norm_doc_dept != "ALL" and norm_u_dept != "ALL" and norm_doc_dept != norm_u_dept:
-                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' dept '{norm_doc_dept}' != Student dept '{norm_u_dept}'")
+                # 2. DEPARTMENT CHECK: If doc belongs to a specific department, user's department MUST match!
+                if norm_doc_dept != "ALL":
+                    if norm_u_dept == "ALL" or norm_u_dept != norm_doc_dept:
+                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' dept '{norm_doc_dept}' != User dept '{norm_u_dept}'")
                         return False
 
-                    if norm_doc_year != "ALL" and norm_u_year != "ALL" and norm_doc_year != norm_u_year:
-                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' year '{norm_doc_year}' != Student year '{norm_u_year}'")
+                # 3. YEAR CHECK: If doc belongs to a specific year, user's year MUST match!
+                if norm_doc_year != "ALL":
+                    if norm_u_year == "ALL" or norm_u_year != norm_doc_year:
+                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' year '{norm_doc_year}' != User year '{norm_u_year}'")
                         return False
 
                 return True
@@ -331,7 +336,7 @@ class RAGEngine:
                                 continue
 
                             # Department & Year Access Control Check
-                            if not _is_doc_allowed_for_student(doc):
+                            if not _is_doc_allowed(doc):
                                 continue
 
                             # Score threshold: L2 distance in Chroma (>1.25 = weak / low similarity)
@@ -363,6 +368,8 @@ class RAGEngine:
                     from main import load_all_pdfs
                     all_chunks, _ = load_all_pdfs()
                     for chunk in all_chunks:
+                        if not _is_doc_allowed(chunk):
+                            continue
                         c_low = chunk.page_content.lower()
                         # Require at least one key term match
                         if any(term in c_low for term in query_key_terms):
@@ -373,6 +380,7 @@ class RAGEngine:
                                     break
                 except Exception as fb_err:
                     print(f"⚠️ Direct PDF fallback note: {fb_err}")
+
 
             if not results:
                 print(f"[RAG] No relevant document chunks found for: '{query[:30]}'")
