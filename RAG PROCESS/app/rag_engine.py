@@ -29,35 +29,50 @@ def get_installed_ollama_models() -> list[str]:
         pass
     return []
 
-def _normalize_college(c: str | None) -> str:
-    if not c:
-        return "ALL"
-    s = re.sub(r'[^a-zA-Z0-9]', '', str(c)).upper()
-    return s if s else "ALL"
+def _colleges_match(c1: str | None, c2: str | None) -> bool:
+    if not c1 or not c2:
+        return True
+    s1 = (c1 or "").strip().lower()
+    s2 = (c2 or "").strip().lower()
+    if s1 == "all" or s2 == "all" or not s1 or not s2:
+        return True
+    
+    norm1 = re.sub(r'[^a-zA-Z0-9]', '', s1)
+    norm2 = re.sub(r'[^a-zA-Z0-9]', '', s2)
+    if norm1 == norm2 or norm1 in norm2 or norm2 in norm1:
+        return True
 
-def _normalize_dept(d: str | None) -> str:
-    if not d:
-        return "ALL"
-    s = re.sub(r'[^a-zA-Z0-9]', '', str(d)).upper()
-    if "AIML" in s or "AIANDML" in s or "MACHINE" in s:
-        return "AIML"
-    if "AIDS" in s or "DATASCIENCE" in s:
-        return "AIDS"
-    return s
+    common_words = {"college", "engineering", "of", "technology", "institute", "science", "and", "autonomous", "erode", "coimbatore", "chennai", "madurai", "trichy", "salem"}
+    w1 = set(re.findall(r'[a-z0-9]+', s1)) - common_words
+    w2 = set(re.findall(r'[a-z0-9]+', s2)) - common_words
 
-def _normalize_year(y: str | None) -> str:
-    if not y:
-        return "ALL"
-    s = str(y).lower()
-    if "1" in s:
-        return "1st Year"
-    if "2" in s:
-        return "2nd Year"
-    if "3" in s:
-        return "3rd Year"
-    if "4" in s:
-        return "4th Year"
-    return s.strip()
+    if w1 and w2 and (w1 == w2 or w1.issubset(w2) or w2.issubset(w1) or len(w1.intersection(w2)) >= 1):
+        return True
+
+    return False
+
+def _depts_match(d1: str | None, d2: str | None) -> bool:
+    if not d1 or not d2:
+        return True
+    s1 = _normalize_dept(d1)
+    s2 = _normalize_dept(d2)
+    if s1 == "ALL" or s2 == "ALL" or not s1 or not s2:
+        return True
+    if s1 == s2 or s1 in s2 or s2 in s1:
+        return True
+    return False
+
+def _years_match(y1: str | None, y2: str | None) -> bool:
+    if not y1 or not y2:
+        return True
+    s1 = _normalize_year(y1)
+    s2 = _normalize_year(y2)
+    if s1 == "ALL" or s2 == "ALL" or not s1 or not s2:
+        return True
+    if s1 == s2:
+        return True
+    return False
+
 
 class RAGEngine:
 

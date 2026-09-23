@@ -673,6 +673,50 @@ def _norm_year(y: str | None) -> str:
         return "4TH YEAR"
     return s.upper().strip()
 
+def _colleges_match(c1: str | None, c2: str | None) -> bool:
+    if not c1 or not c2:
+        return True
+    s1 = (c1 or "").strip().lower()
+    s2 = (c2 or "").strip().lower()
+    if s1 == "all" or s2 == "all" or not s1 or not s2:
+        return True
+    
+    norm1 = re.sub(r'[^a-zA-Z0-9]', '', s1)
+    norm2 = re.sub(r'[^a-zA-Z0-9]', '', s2)
+    if norm1 == norm2 or norm1 in norm2 or norm2 in norm1:
+        return True
+
+    common_words = {"college", "engineering", "of", "technology", "institute", "science", "and", "autonomous", "erode", "coimbatore", "chennai", "madurai", "trichy", "salem"}
+    w1 = set(re.findall(r'[a-z0-9]+', s1)) - common_words
+    w2 = set(re.findall(r'[a-z0-9]+', s2)) - common_words
+
+    if w1 and w2 and (w1 == w2 or w1.issubset(w2) or w2.issubset(w1) or len(w1.intersection(w2)) >= 1):
+        return True
+
+    return False
+
+def _depts_match(d1: str | None, d2: str | None) -> bool:
+    if not d1 or not d2:
+        return True
+    s1 = _norm_dept(d1)
+    s2 = _norm_dept(d2)
+    if s1 == "ALL" or s2 == "ALL" or not s1 or not s2:
+        return True
+    if s1 == s2 or s1 in s2 or s2 in s1:
+        return True
+    return False
+
+def _years_match(y1: str | None, y2: str | None) -> bool:
+    if not y1 or not y2:
+        return True
+    s1 = _norm_year(y1)
+    s2 = _norm_year(y2)
+    if s1 == "ALL" or s2 == "ALL" or not s1 or not s2:
+        return True
+    if s1 == s2:
+        return True
+    return False
+
 # ==========================
 # GET PDFS
 # ==========================
@@ -716,22 +760,16 @@ def get_pdfs(
 
         # 1. Filtering by College for ALL users
         if college and college.strip() and college.upper() != "ALL":
-            u_clg_norm = _norm_college(college)
-            d_clg_norm = _norm_college(doc_college)
-            if d_clg_norm != "ALL" and d_clg_norm != u_clg_norm:
+            if not _colleges_match(college, doc_college):
                 continue
 
         # 2. Filtering for Students (Department & Year)
         if role == "student":
-            u_dept_norm = _norm_dept(department)
-            u_year_norm = _norm_year(year)
-            d_dept_norm = _norm_dept(doc_dept)
-            d_year_norm = _norm_year(doc_year)
+            if department and not _depts_match(department, doc_dept):
+                continue
+            if year and not _years_match(year, doc_year):
+                continue
 
-            if u_dept_norm != "ALL" and d_dept_norm != "ALL" and d_dept_norm != u_dept_norm:
-                continue
-            if u_year_norm != "ALL" and d_year_norm != "ALL" and d_year_norm != u_year_norm:
-                continue
 
         structured_files.append({
             "filename": fname,
