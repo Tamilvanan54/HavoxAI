@@ -63,12 +63,12 @@ def _norm_year(y: str | None) -> str:
     return s.upper().strip()
 
 def _colleges_match(c1: str | None, c2: str | None) -> bool:
-    if not c1 or not c2:
+    if not c1 or c1.strip().upper() == "ALL":
         return True
-    s1 = (c1 or "").strip().lower()
-    s2 = (c2 or "").strip().lower()
-    if s1 == "all" or s2 == "all" or not s1 or not s2:
-        return True
+    if not c2 or c2.strip().upper() == "ALL":
+        return False
+    s1 = c1.strip().lower()
+    s2 = c2.strip().lower()
     
     norm1 = re.sub(r'[^a-zA-Z0-9]', '', s1)
     norm2 = re.sub(r'[^a-zA-Z0-9]', '', s2)
