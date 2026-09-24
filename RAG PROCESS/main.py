@@ -62,6 +62,13 @@ def parse_pdf_college_dept_year(file_name: str) -> tuple[str, str, str]:
     except Exception:
         pass
 
+    if clg == "ALL" or not clg:
+        b_low = base_name.lower()
+        if "erodesengunthar" in b_low or "esec" in b_low:
+            clg = "Erode Sengunthar Engineering College"
+        elif "kongu" in b_low:
+            clg = "Kongu Engineering College, Erode"
+
     if dept == "ALL" or year == "ALL":
         parts = base_name.split("_")
         known_depts = ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML"]
