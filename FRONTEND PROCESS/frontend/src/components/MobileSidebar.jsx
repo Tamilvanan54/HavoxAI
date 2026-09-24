@@ -298,12 +298,12 @@ currentChatId
       >
 
         <FiPaperclip
-          onClick={() =>
-            togglePin(chat.id)
-          }
+          onClick={(e) => {
+            e.stopPropagation();
+            if (togglePin) togglePin(chat.id || chat._id);
+          }}
           style={{
             cursor:"pointer",
-
             color:
   chat.pinned
     ? "#e5e7eb"
@@ -311,17 +311,16 @@ currentChatId
           }}
         />
 
-
-
         <FiTrash2
-          onClick={() =>
-            deleteChat(chat.id)
-          }
+          onClick={(e) => {
+            e.stopPropagation();
+            if (deleteChat) deleteChat(chat.id || chat._id);
+          }}
           style={{
             cursor:"pointer",
-            color:"#9ca3af",
-               }}
-            />
+            color:"#ef4444",
+          }}
+        />
 
              </div>
 
