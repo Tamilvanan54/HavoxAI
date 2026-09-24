@@ -656,12 +656,12 @@ Question: {query}
 Instructions:
 1. {strict_guardrail}
 2. Provide 4-6 lines of clear explanation based ONLY on the Context for the question asked.
-3. Leave a blank line, then write "### Example" followed by a practical example from Context.
+3. You MUST provide a complete practical example under "### Example". Do NOT leave "### Example" blank or incomplete.
 
 Answer:"""
 
     def _ensure_example_section(self, answer_text: str, context_text: str) -> str:
-        """Ensure every valid grounded answer contains exactly ONE '### Example' section."""
+        """Ensure every valid grounded answer contains a COMPLETE, non-empty '### Example' section."""
         if not answer_text:
             return answer_text
 
@@ -669,20 +669,43 @@ Answer:"""
         if "can answer only from the uploaded study materials" in cleaned.lower() or EXACT_REFUSAL_MESSAGE.lower() in cleaned.lower():
             return EXACT_REFUSAL_MESSAGE
 
-        # Deduplicate any repeated ### Example headers
-        cleaned = re.sub(r'(?:\n*\s*###?\s*Example:?\s*)+', r'\n\n### Example\n', cleaned, flags=re.IGNORECASE)
+        # Clean up any trailing empty '### Example' or 'Example:' lines
+        cleaned = re.sub(r'(\n*\s*###?\s*Example:?\s*)+$', '', cleaned, flags=re.IGNORECASE).strip()
 
-        if "### Example" in cleaned:
-            return cleaned.strip()
+        # Check if there is already a non-empty ### Example block with content (> 15 chars)
+        example_match = re.search(r'###?\s*Example\s*\n+([\s\S]+)', cleaned, flags=re.IGNORECASE)
+        if example_match:
+            example_body = example_match.group(1).strip()
+            clean_body = re.sub(r'^(example:?\s*)+', '', example_body, flags=re.IGNORECASE).strip()
+            if len(clean_body) > 15:
+                header_pos = example_match.start()
+                base_ans = cleaned[:header_pos].strip()
+                return f"{base_ans}\n\n### Example\n{clean_body}"
 
-        # Extract an example snippet from context if available
+        # If ### Example was empty or missing, strip any broken header remnants from base_ans
+        base_ans = re.sub(r'\n*\s*###?\s*Example:?\s*.*$', '', cleaned, flags=re.IGNORECASE).strip()
+
+        # Try to find an example snippet from the context text
+        extracted_example = None
         if context_text:
             lines = [l.strip() for l in context_text.split('\n') if l.strip()]
             for line in lines:
-                if any(w in line.lower() for w in ["example", "for instance", "such as", "e.g.", "case"]):
-                    return f"{cleaned}\n\n### Example\n{line}"
+                l_low = line.lower()
+                if any(w in l_low for w in ["example", "for instance", "such as", "e.g.", "192.168", "consider"]):
+                    if len(line) > 20 and not line.startswith("#"):
+                        extracted_example = line
+                        break
 
-        return f"{cleaned}\n\n{NO_EXAMPLE_FALLBACK}"
+        if extracted_example:
+            return f"{base_ans}\n\n### Example\n{extracted_example}"
+        
+        # Fallback to extracting a descriptive context line for illustration
+        if context_text:
+            lines = [l.strip() for l in context_text.split('\n') if len(l.strip()) > 30 and not l.strip().startswith("#")]
+            if lines:
+                return f"{base_ans}\n\n### Example\nFor instance: {lines[0]}"
+
+        return f"{base_ans}\n\n{NO_EXAMPLE_FALLBACK}"
 
     def query_stream_sse(
         self,
