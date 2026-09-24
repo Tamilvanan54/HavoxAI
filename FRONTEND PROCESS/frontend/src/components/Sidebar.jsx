@@ -298,6 +298,13 @@ export default function Sidebar({
               >
                 📊 Logs
               </div>
+
+              <div
+                onClick={() => navigate("/signup?role=staff")}
+                style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                📝 Staff Signup
+              </div>
             </>
           )}
 

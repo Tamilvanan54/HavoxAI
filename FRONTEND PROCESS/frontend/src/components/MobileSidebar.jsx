@@ -528,6 +528,27 @@ currentChatId
 
                       </div>
 
+                      <div
+                        onClick={() => {
+
+                          navigate("/signup?role=staff");
+                          setIsOpen(false);
+
+                        }}
+                        style={{
+                          display:"flex",
+                          gap:"12px",
+                          alignItems:"center",
+                          cursor:"pointer",
+                        }}
+                      >
+
+                        <FiUser />
+
+                        Staff Signup
+
+                      </div>
+
 
 
                     </>

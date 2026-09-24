@@ -195,6 +195,21 @@ const handleViewFeedback = async (id) => {
 
 };
 
+const handleDeleteFeedback = async (id) => {
+  const confirmDelete = window.confirm(`Are you sure you want to delete feedback #${id}?`);
+  if (!confirmDelete) return;
+
+  try {
+    await axios.delete(`${API_BASE_URL}/feedback/${id}`);
+    setMessage(`Feedback #${id} deleted successfully.`);
+    setTimeout(() => setMessage(""), 3000);
+    await loadFeedbacks();
+  } catch (error) {
+    console.log("Delete Feedback Error", error);
+    alert("Failed to delete feedback.");
+  }
+};
+
 const filteredFeedbacks = feedbacks.filter(
 
 (item)=>
@@ -710,7 +725,7 @@ formatDate(item.created_at)
 
 
 
-<td style={tableData}>
+<td style={{ ...tableData, display: "flex", gap: "8px", alignItems: "center" }}>
 
 
 <button
@@ -756,6 +771,39 @@ View
 
 </button>
 
+
+<button
+
+
+onClick={()=> handleDeleteFeedback(item.id)}
+
+
+style={{
+
+padding:"8px 15px",
+
+background:"#ef4444",
+
+color:"white",
+
+border:"none",
+
+borderRadius:"8px",
+
+cursor:"pointer",
+
+fontWeight:"bold"
+
+}}
+
+
+>
+
+
+Delete
+
+
+</button>
 
 
 </td>

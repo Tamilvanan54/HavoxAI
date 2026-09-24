@@ -481,6 +481,25 @@ def update_feedback(
     )
 
 
+@app.delete("/feedback/{feedback_id}")
+@app.delete("/feedbacks/{feedback_id}")
+def delete_feedback(feedback_id: int):
+    try:
+        from database.connection import SessionLocal
+        from database.models import Feedback
+        db = SessionLocal()
+        fb = db.query(Feedback).filter(Feedback.id == feedback_id).first()
+        if fb:
+            db.delete(fb)
+            db.commit()
+            db.close()
+            return {"status": True, "message": f"Feedback {feedback_id} deleted successfully"}
+        db.close()
+        return {"status": False, "message": "Feedback not found"}
+    except Exception as e:
+        return {"status": False, "message": str(e)}
+
+
 
 
 
