@@ -2,13 +2,6 @@ import re
 
 REFERENCE_PRONOUNS = {"it", "its", "that", "their", "this", "them", "these", "those"}
 
-FOLLOWUP_KEYWORDS = {
-    "shortly", "briefly", "short", "summary", "summarize", "elaborate",
-    "detail", "details", "example", "examples", "usages", "usage",
-    "applications", "application", "advantages", "disadvantages", "types",
-    "explain", "more", "points", "step", "steps", "diagram", "code"
-}
-
 FOLLOWUP_PHRASES = [
     "give it shortly", "give shortly", "in short", "make it short", "make short",
     "explain shortly", "tell shortly", "give brief", "briefly", "short answer",
@@ -26,21 +19,28 @@ def resolve_history_reference(
     history: str | list | None
 ) -> tuple[str, bool, str | None, str | None]:
     """
-    Resolve references like 'it', 'its', 'give it shortly', 'shortly', '2 marks', etc. using chat history.
+    Resolve references like 'it', 'its', 'give it shortly', 'give 2 marks' using chat history.
+    Does NOT affect new standalone questions (e.g. 'what is subnetting', 'what is routing').
     Returns: (search_query, is_unclear, refusal_type, clarification_message)
     """
     if not query:
         return query, False, None, None
 
     query_lower = query.lower().strip()
-    words = set(re.findall(r'\b[a-zA-Z0-9_-]+\b', query_lower))
+    tokens = re.findall(r'\b[a-zA-Z0-9_-]+\b', query_lower)
+    words = set(tokens)
 
+    # Check for explicit pronouns ('it', 'its', 'this', 'that', etc.)
     has_pronoun = bool(words.intersection(REFERENCE_PRONOUNS))
+    
+    # Check for explicit follow-up instruction phrases ('give it shortly', 'give 2 marks', etc.)
     has_followup_phrase = any(phrase in query_lower for phrase in FOLLOWUP_PHRASES)
-    has_followup_kw = bool(words.intersection(FOLLOWUP_KEYWORDS)) and len(words) <= 5
-    is_short_query = len(words) <= 4
 
-    is_followup = has_pronoun or has_followup_phrase or has_followup_kw or is_short_query
+    # A query is a follow-up ONLY if it has an explicit pronoun OR an explicit follow-up phrase
+    is_followup = has_pronoun or has_followup_phrase
+
+    if not is_followup:
+        return query, False, None, None
 
     # Format history turns into list of strings
     history_lines = []
@@ -68,18 +68,20 @@ def resolve_history_reference(
                 if q_text and "cannot find information" not in q_text.lower() and "study materials" not in q_text.lower():
                     user_questions.append(q_text)
 
-    # If query is a follow-up but NO prior user topic exists in history:
+    # If query is a follow-up ("give it shortly") but NO prior user question exists in history:
     if is_followup and not user_questions:
         if has_pronoun or "its" in query_lower or "it" in words:
             refusal_msg = 'Could you clarify what topic you are referring to? I can then search the uploaded materials for the correct topic.'
             return query, True, "unclear_reference", refusal_msg
+        return query, False, None, None
 
-    # Extract previous user topic
+    # If previous user topic exists:
     if user_questions:
         last_user_q = user_questions[-1][:120]
+        # Avoid appending if last_user_q is identical to current query
         if last_user_q.lower() != query_lower:
             search_query = f"{last_user_q} {query}"
-            print(f"🔄 [HISTORY RESOLUTION] Resolved search query: '{query}' -> '{search_query}' (Topic: '{last_user_q}')")
+            print(f"🔄 [HISTORY RESOLUTION] Follow-up query resolved: '{query}' -> '{search_query}' (Topic: '{last_user_q}')")
             return search_query, False, None, None
 
     return query, False, None, None
