@@ -138,7 +138,7 @@ export default function Profile() {
           🏫 <b>College:</b> {user.college || "—"}
         </div>
 
-        {user.role !== "admin" && user.department && (
+        {(user.role || "").toLowerCase() === "student" && user.department && (
           <div
             style={{
               background: "#3a3a3a",
@@ -151,7 +151,7 @@ export default function Profile() {
           </div>
         )}
 
-        {user.role !== "admin" && user.year && (
+        {(user.role || "").toLowerCase() === "student" && user.year && (
           <div
             style={{
               background: "#3a3a3a",
