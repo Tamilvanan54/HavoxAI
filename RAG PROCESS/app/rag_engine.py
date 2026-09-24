@@ -346,23 +346,28 @@ class RAGEngine:
                 doc_dept = doc_dept or "ALL"
                 doc_year = doc_year or "ALL"
 
-                # 1. COLLEGE CHECK: User's college must match document college
+                is_staff_or_admin = (user_role or "").strip().lower() in ["admin", "staff"]
+
+                # 1. COLLEGE CHECK (STRICT GUARDRAIL FOR ALL ROLES):
+                # User's college MUST match document college!
                 if user_college and user_college.strip() and user_college.upper() != "ALL":
                     if not _colleges_match(user_college, doc_clg):
                         print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' college '{doc_clg}' != User college '{user_college}'")
                         return False
 
-                # 2. DEPARTMENT CHECK: User's department must match document department
-                if user_dept and user_dept.strip() and user_dept.upper() != "ALL":
-                    if not _depts_match(user_dept, doc_dept):
-                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' dept '{doc_dept}' != User dept '{user_dept}'")
-                        return False
+                # 2. DEPARTMENT & YEAR CHECKS (STRICT FOR STUDENTS ONLY):
+                # Admin and Staff can query ALL departments and years within their college.
+                # Students can ONLY query their own matching department and year!
+                if not is_staff_or_admin:
+                    if user_dept and user_dept.strip() and user_dept.upper() != "ALL":
+                        if not _depts_match(user_dept, doc_dept):
+                            print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' dept '{doc_dept}' != Student dept '{user_dept}'")
+                            return False
 
-                # 3. YEAR CHECK: User's year must match document year
-                if user_year and user_year.strip() and user_year.upper() != "ALL":
-                    if not _years_match(user_year, doc_year):
-                        print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' year '{doc_year}' != User year '{user_year}'")
-                        return False
+                    if user_year and user_year.strip() and user_year.upper() != "ALL":
+                        if not _years_match(user_year, doc_year):
+                            print(f"🚫 [RAG ACCESS REJECTED] File '{doc_name}' year '{doc_year}' != Student year '{user_year}'")
+                            return False
 
                 return True
 

@@ -11,26 +11,34 @@ RAG_URL = os.getenv(
 
 print("RAG URL =", RAG_URL)
 
-def ask_rag(question: str, model_name: str = "qwen3:8b"):
+def ask_rag(
+    question: str,
+    model_name: str = "qwen2.5:1.5b",
+    college: str = "",
+    department: str = "",
+    year: str = "",
+    role: str = ""
+):
     try:
-        print("QUESTION =", question, "| MODEL =", model_name)
+        print("QUESTION =", question, "| MODEL =", model_name, "| COLLEGE =", college)
 
         response = requests.post(
             RAG_URL,
             json={
                 "query": question,
-                "model_name": model_name
+                "model_name": model_name,
+                "college": college,
+                "department": department,
+                "year": year,
+                "role": role
             },
             timeout=30
         )
-
-        print("STATUS =", response.status_code)
-        print("BODY =", response.text)
 
         return response.json()
 
     except Exception as e:
         print("RAG ERROR =", str(e))
         return {
-            "answer": "Sorry, I cannot find information regarding this question in the uploaded documents."
+            "answer": "I can answer only from the uploaded study materials. I could not find enough relevant information in the available documents for this question."
         }
