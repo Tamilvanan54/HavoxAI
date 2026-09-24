@@ -235,9 +235,9 @@ export default function Chat() {
     let recentHistory = "";
     if (Array.isArray(messages) && messages.length > 0) {
       recentHistory = messages
-        .slice(-4)
-        .filter((m) => m && m.text && typeof m.text === "string" && !m.text.includes("cannot find information"))
-        .map((m) => `${m.sender === "User" ? "User" : "Assistant"}: ${m.text.slice(0, 150)}`)
+        .slice(-6)
+        .filter((m) => m && m.text && typeof m.text === "string" && !m.text.includes("cannot find information") && !m.text.includes("study materials"))
+        .map((m) => `${(m.sender === "User" || m.sender === "student") ? "User" : "Assistant"}: ${m.text.slice(0, 200)}`)
         .join("\n");
     }
 

@@ -475,22 +475,23 @@ class RAGEngine:
         is_math, is_big, is_diagram = self._classify_query(query)
         mark_level = self._detect_mark_level(query)
 
-        history_section = f"\nRecent Conversation:\n{history.strip()}\n" if history and history.strip() else ""
+        history_section = f"\nRecent Conversation History:\n{history.strip()}\n" if history and history.strip() else ""
 
         strict_guardrail = """Answer the user's question accurately based ONLY on the provided Context below.
 - Rely ONLY on facts explicitly stated in the Context. Do NOT use outside knowledge.
-- Do NOT fabricate facts. Keep your answer strictly grounded in the Context."""
+- Focus STRICTLY on answering ONLY the specific topic asked in the Question. Do NOT output or summarize unrelated topics, chapters, or headings found in the Context.
+- Complete your answer fully and clearly. Do NOT stop mid-sentence."""
 
         if mark_level is not None:
             if mark_level == 1:
                 return f"""Context:
 {context_text}
-
+{history_section}
 Question: {query}
 
 Instructions:
 1. {strict_guardrail}
-2. Provide a 1-mark answer: extremely direct, exact 1-2 sentence definition based ONLY on the Context.
+2. Provide a 1-mark answer: extremely direct, exact 1-2 sentence definition based ONLY on the Context for the question asked.
 3. Include a short 1-line example.
 
 Answer:"""
@@ -498,12 +499,12 @@ Answer:"""
             if mark_level == 2:
                 return f"""Context:
 {context_text}
-
+{history_section}
 Question: {query}
 
 Instructions:
 1. {strict_guardrail}
-2. Provide a 2-mark level answer with EXPLICITLY 3 to 5 lines of concise explanation based ONLY on the Context.
+2. Provide a 2-mark level answer with EXPLICITLY 3 to 5 lines of concise explanation based ONLY on the Context for the question asked.
 3. You MUST include a dedicated example section at the end.
 
 Format your output EXACTLY as follows:
@@ -512,19 +513,19 @@ Format your output EXACTLY as follows:
 [3 to 5 lines of explanation from Context]
 
 ### Example
-[Short 1-2 line practical example (chinna example) from Context]
+[Short 1-2 line practical example from Context]
 
 Answer:"""
 
             if 3 <= mark_level <= 6:
                 return f"""Context:
 {context_text}
-
+{history_section}
 Question: {query}
 
 Instructions:
 1. {strict_guardrail}
-2. Provide a {mark_level}-mark level answer (moderately detailed, 5 to 8 lines with 4-6 bullet points) based ONLY on the Context.
+2. Provide a {mark_level}-mark level answer (moderately detailed, 5 to 8 lines with 4-6 bullet points) based ONLY on the Context for the question asked.
 3. You MUST include a dedicated example section at the end.
 
 Format your output EXACTLY as follows:
@@ -540,12 +541,12 @@ Answer:"""
             if 7 <= mark_level <= 10:
                 return f"""Context:
 {context_text}
-
+{history_section}
 Question: {query}
 
 Instructions:
 1. {strict_guardrail}
-2. Provide an extensive, highly detailed {mark_level}-mark level exam answer based ONLY on the Context.
+2. Provide an extensive, highly detailed {mark_level}-mark level exam answer based ONLY on the Context for the question asked.
 3. You MUST structure your response with all of the following exact markdown subheadings and elaborate each section fully using the Context:
 
 Format your output EXACTLY as follows:
@@ -567,12 +568,12 @@ Answer:"""
             if mark_level >= 11:
                 return f"""Context:
 {context_text}
-
+{history_section}
 Question: {query}
 
 Instructions:
 1. {strict_guardrail}
-2. Provide a FULL, EXHAUSTIVE, COMPREHENSIVE {mark_level}-MARK LEVEL EXAM ANSWER based ONLY on the Context.
+2. Provide a FULL, EXHAUSTIVE, COMPREHENSIVE {mark_level}-MARK LEVEL EXAM ANSWER based ONLY on the Context for the question asked.
 3. This is a {mark_level}-mark question: your answer MUST be long, thorough, highly detailed, and fully structured with comprehensive explanations under every heading. Do NOT provide short summaries.
 4. You MUST structure your response with all of the following exact markdown subheadings:
 
@@ -591,14 +592,14 @@ Format your output EXACTLY as follows:
 [Detailed explanation of advantages, limitations, use-cases, and real-world deployment from Context]
 
 ### Example
-[A large, comprehensive, step-by-step practical real-world example (periya example fulla explain pannanum) based on the Context]
+[A large, comprehensive, step-by-step practical real-world example based on the Context]
 
 Answer:"""
 
         if is_diagram:
             return f"""Context:
 {context_text}
-
+{history_section}
 Question: {query}
 
 Instructions:
@@ -611,7 +612,7 @@ Answer:"""
         if is_math:
             return f"""Context:
 {context_text}
-
+{history_section}
 Question: {query}
 
 Instructions:
@@ -637,12 +638,12 @@ Solution:"""
         if is_big:
             return f"""Context:
 {context_text}
-
+{history_section}
 Question: {query}
 
 Instructions:
 1. {strict_guardrail}
-2. Provide a detailed answer (Definition, Key Points, Process) using ONLY Context.
+2. Provide a detailed answer (Definition, Key Points, Process) using ONLY Context for the question asked.
 3. Leave a blank line, then write "### Example" followed by a detailed example from Context.
 
 Answer:"""
@@ -654,7 +655,7 @@ Question: {query}
 
 Instructions:
 1. {strict_guardrail}
-2. Provide 4-6 lines of clear explanation based ONLY on the Context.
+2. Provide 4-6 lines of clear explanation based ONLY on the Context for the question asked.
 3. Leave a blank line, then write "### Example" followed by a practical example from Context.
 
 Answer:"""
@@ -775,21 +776,21 @@ Answer:"""
         formatted_prompt = self._build_prompt(corrected_query, context_text, history=history_str)
 
         # Dynamic Ollama options based on mark level to allow long 16-mark / 10-mark answers
-        dyn_predict = 600
-        dyn_ctx = 2048
+        dyn_predict = 1000
+        dyn_ctx = 4096
         if mark_lvl is not None:
             if mark_lvl >= 11:
-                dyn_predict = 1500
-                dyn_ctx = 3072
+                dyn_predict = 2500
+                dyn_ctx = 4096
             elif mark_lvl >= 7:
-                dyn_predict = 1000
-                dyn_ctx = 2048
+                dyn_predict = 1800
+                dyn_ctx = 4096
             elif mark_lvl >= 3:
-                dyn_predict = 700
-                dyn_ctx = 2048
+                dyn_predict = 1200
+                dyn_ctx = 3072
             elif mark_lvl in (1, 2):
-                dyn_predict = 400
-                dyn_ctx = 1024
+                dyn_predict = 800
+                dyn_ctx = 2048
 
         dyn_options = dict(self.options)
         dyn_options["num_predict"] = dyn_predict
