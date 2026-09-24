@@ -478,8 +478,9 @@ class RAGEngine:
         history_section = f"\nRecent Conversation History:\n{history.strip()}\n" if history and history.strip() else ""
 
         strict_guardrail = """Answer the user's question accurately based ONLY on the provided Context below.
-- Rely ONLY on facts explicitly stated in the Context. Do NOT use outside knowledge.
-- Focus STRICTLY on answering ONLY the specific topic asked in the Question. Do NOT output or summarize unrelated topics, chapters, or headings found in the Context.
+- Rely ONLY on facts explicitly stated in the Context. Do NOT use outside knowledge or hallucinate.
+- Focus STRICTLY on answering ONLY the specific topic asked in the Question (if the question is a follow-up like 'give it shortly' or 'briefly', answer ONLY for the previous question from history).
+- Do NOT output or summarize unrelated topics, chapters, or headings found in the Context.
 - Complete your answer fully and clearly. Do NOT stop mid-sentence."""
 
         if mark_level is not None:
