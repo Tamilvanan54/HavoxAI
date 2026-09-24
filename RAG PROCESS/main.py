@@ -71,7 +71,7 @@ def parse_pdf_college_dept_year(file_name: str) -> tuple[str, str, str]:
 
     if dept == "ALL" or year == "ALL":
         parts = base_name.split("_")
-        known_depts = ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML"]
+        known_depts = ["CSE", "ECE", "EEE", "MECH", "IT", "CIVIL", "AIDS", "AIML", "CSBS", "MCT", "CHEM", "BIO", "AERO", "AUTO", "MARINE", "PROD", "TEXTILE", "ENV", "FOOD", "INSTRU", "INDUSTRIAL", "PETRO", "MINING", "METALLURGY", "ROBOTICS"]
         for p in parts:
             p_upper = p.upper()
             if dept == "ALL":

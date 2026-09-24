@@ -85,23 +85,27 @@ def _colleges_match(c1: str | None, c2: str | None) -> bool:
     return False
 
 def _depts_match(d1: str | None, d2: str | None) -> bool:
-    if not d1 or not d2:
+    if not d1 or d1.strip().upper() == "ALL":
         return True
+    if not d2 or d2.strip().upper() == "ALL":
+        return False
     s1 = _norm_dept(d1)
     s2 = _norm_dept(d2)
-    if s1 == "ALL" or s2 == "ALL" or not s1 or not s2:
-        return True
+    if not s1 or not s2 or s1 == "ALL" or s2 == "ALL":
+        return False
     if s1 == s2 or s1 in s2 or s2 in s1:
         return True
     return False
 
 def _years_match(y1: str | None, y2: str | None) -> bool:
-    if not y1 or not y2:
+    if not y1 or y1.strip().upper() == "ALL":
         return True
+    if not y2 or y2.strip().upper() == "ALL":
+        return False
     s1 = _norm_year(y1)
     s2 = _norm_year(y2)
-    if s1 == "ALL" or s2 == "ALL" or not s1 or not s2:
-        return True
+    if not s1 or not s2 or s1 == "ALL" or s2 == "ALL":
+        return False
     if s1 == s2:
         return True
     return False
