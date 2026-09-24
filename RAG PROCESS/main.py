@@ -182,13 +182,15 @@ def load_all_pdfs(force_reload: bool = False) -> tuple[list[Document], set[str]]
         "/root/HALLOW.AI/RAG PROCESS/data"
     ]
     pdf_files = []
+    seen_basenames = set()
 
     for d in search_dirs:
         if os.path.exists(d):
             found = glob.glob(os.path.join(d, "*.pdf")) + glob.glob(os.path.join(d, "**/*.pdf"), recursive=True)
             for f in found:
-                abs_f = os.path.abspath(f)
-                if abs_f not in [os.path.abspath(p) for p in pdf_files]:
+                bname = os.path.basename(f)
+                if bname not in seen_basenames:
+                    seen_basenames.add(bname)
                     pdf_files.append(f)
 
     if not pdf_files:
@@ -433,51 +435,79 @@ def health_check():
 
 @app.post("/api/ingest")
 def handle_ingest(request: IngestRequest | None = None):
-    """Ingest newly uploaded documents from ./data folder into Chroma vectorstore asynchronously."""
+    """Ingest newly uploaded documents into Chroma vectorstore synchronously so RAG is immediately ready."""
     global engine
     try:
         parse_pdf_college_dept_year.cache_clear()
     except Exception:
         pass
-    import threading
-    def _async_ingest():
-        try:
-            print("⏳ Background document indexing started...")
-            chunks = reload_vectorstore()
-            print(f"✅ Background indexing complete with {chunks} chunks!")
-        except Exception as err:
-            print(f"❌ Background indexing error: {err}")
-
-    threading.Thread(target=_async_ingest, daemon=True).start()
-    return {"status": "success", "message": "Document indexing started in background"}
+    print("⏳ Synchronous document indexing started for immediate RAG availability...")
+    try:
+        chunks = reload_vectorstore()
+        print(f"✅ Document indexing complete! RAG ready with {chunks} chunks.")
+        return {"status": "success", "message": f"Document indexing complete with {chunks} chunks"}
+    except Exception as err:
+        print(f"❌ Indexing error: {err}")
+        return {"status": "error", "message": str(err)}
 
 @app.post("/api/delete-doc")
 def handle_delete_doc(request: DeleteDocRequest):
-    """Remove a document from ./data and purge its chunks from Chroma vectorstore."""
-    global engine
+    """Remove a document from all directories, clear caches, and purge its chunks from Chroma vectorstore."""
+    global engine, GLOBAL_SPLIT_DOCS, GLOBAL_PDF_VOCAB
     try:
         parse_pdf_college_dept_year.cache_clear()
     except Exception:
         pass
+
     filename = request.filename
     print(f"🗑️ Deleting document from RAG: {filename}")
 
-    rag_file_path = os.path.join("./data", filename)
-    if os.path.exists(rag_file_path):
-        try:
-            os.remove(rag_file_path)
-            print(f"✓ Removed file '{rag_file_path}'")
-        except Exception as e:
-            print(f"⚠️ Failed to delete '{rag_file_path}': {e}")
+    # 1. Remove physical files from all search directories
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    search_dirs = [
+        os.path.join(base_dir, "data"),
+        os.path.join(base_dir, "uploads"),
+        os.path.join(base_dir, "..", "uploads"),
+        os.path.join(base_dir, "..", "data"),
+        os.path.join(base_dir, "..", "BACKEND PROCESS", "uploads"),
+        "/root/HALLOW.AI/data",
+        "/root/HALLOW.AI/uploads",
+        "/root/HALLOW.AI/BACKEND PROCESS/uploads",
+        "/root/HALLOW.AI/RAG PROCESS/data"
+    ]
 
-    # Purge vectors directly from Chroma collection
+    for d in search_dirs:
+        if os.path.exists(d):
+            try:
+                for f in os.listdir(d):
+                    if f == filename or f.endswith(filename) or filename.endswith(f):
+                        fp = os.path.join(d, f)
+                        try:
+                            os.remove(fp)
+                            print(f"✓ Removed file '{fp}'")
+                        except Exception as e:
+                            print(f"⚠️ Failed to delete '{fp}': {e}")
+            except Exception:
+                pass
+
+    # 2. Purge vectors directly from Chroma collection
     if engine and engine.vectorstore:
         try:
             col = engine.vectorstore._collection
-            col.delete(where={"source": filename})
-            print(f"✓ Purged Chroma collection vectors for '{filename}'")
+            try:
+                col.delete(where={"source": filename})
+                print(f"✓ Purged Chroma collection vectors for source='{filename}'")
+            except Exception:
+                pass
+            try:
+                col.delete(where={"filename": filename})
+            except Exception:
+                pass
         except Exception as purge_err:
             print(f"⚠️ Chroma collection purge note: {purge_err}")
+
+    # 3. Purge in-memory split docs
+    GLOBAL_SPLIT_DOCS = [doc for doc in GLOBAL_SPLIT_DOCS if doc.metadata.get("source") != filename]
 
     chunks_count = reload_vectorstore()
     return {"status": "success", "message": f"Deleted {filename} and purged vectorstore", "remaining_chunks": chunks_count}

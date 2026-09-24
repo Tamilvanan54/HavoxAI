@@ -33,14 +33,19 @@ def delete_pdf(filename: str):
 
     for d in search_dirs:
         if os.path.exists(d):
-            target_path = os.path.join(d, filename)
-            if os.path.exists(target_path):
-                try:
-                    os.remove(target_path)
-                    deleted_any = True
-                    print(f"✓ Removed file '{target_path}'")
-                except Exception as e:
-                    print(f"⚠️ Failed to remove '{target_path}': {e}")
+            try:
+                for f in os.listdir(d):
+                    if f == filename or f.endswith(filename) or filename.endswith(f):
+                        target_path = os.path.join(d, f)
+                        if os.path.exists(target_path):
+                            try:
+                                os.remove(target_path)
+                                deleted_any = True
+                                print(f"✓ Removed file '{target_path}'")
+                            except Exception as e:
+                                print(f"⚠️ Failed to remove '{target_path}': {e}")
+            except Exception:
+                pass
 
     if not deleted_any:
         return {

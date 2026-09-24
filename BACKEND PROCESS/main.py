@@ -609,24 +609,20 @@ async def upload_pdf(
             print(f"⚠️ DB PDF Record note: {db_err}")
 
 
-        # Trigger ingest on RAG service asynchronously
-        def _trigger_rag_ingest(fname: str, clg: str, dept: str, yr: str):
-            try:
-                print(f"⏳ Calling RAG ingest for {fname}...")
-                resp = requests.post(
-                    "http://127.0.0.1:8001/api/ingest",
-                    json={"filename": fname, "college": clg, "department": dept, "year": yr},
-                    timeout=300
-                )
-                if resp.status_code == 200:
-                    print(f"✅ RAG ingest success for {fname}: {resp.json()}")
-                else:
-                    print(f"⚠️ RAG ingest response: {resp.status_code} {resp.text}")
-            except Exception as e:
-                print(f"⚠️ RAG ingest background error for {fname}: {e}")
-
-        import threading
-        threading.Thread(target=_trigger_rag_ingest, args=(safe_filename, college, department, year), daemon=True).start()
+        # Trigger ingest on RAG service synchronously so RAG indexing completes before return
+        try:
+            print(f"⏳ Calling RAG ingest for {safe_filename}...")
+            resp = requests.post(
+                "http://127.0.0.1:8001/api/ingest",
+                json={"filename": safe_filename, "college": college, "department": department, "year": year},
+                timeout=120
+            )
+            if resp.status_code == 200:
+                print(f"✅ RAG ingest success for {safe_filename}: {resp.json()}")
+            else:
+                print(f"⚠️ RAG ingest response: {resp.status_code} {resp.text}")
+        except Exception as e:
+            print(f"⚠️ RAG ingest error for {safe_filename}: {e}")
 
         return {
             "status": True,
