@@ -49,7 +49,7 @@ def parse_pdf_college_dept_year(file_name: str) -> tuple[str, str, str]:
         from database.connection import SessionLocal
         from database.models import PDFDocument, User
         db = SessionLocal()
-        doc = db.query(PDFDocument).filter(PDFDocument.filename == base_name).first()
+        doc = db.query(PDFDocument).filter((PDFDocument.filename == base_name) | (PDFDocument.original_name == base_name)).first()
         if doc:
             clg = getattr(doc, "college", "ALL") or "ALL"
             dept = doc.department or "ALL"
