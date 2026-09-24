@@ -143,8 +143,13 @@ export default function Signup() {
 
 
       if (response.data.status) {
-        alert("Account Created Successfully! Please login with your credentials.");
-        navigate("/");
+        if (role === "staff") {
+          alert("Staff Account Registered Successfully!");
+          navigate("/users");
+        } else {
+          alert("Account Created Successfully! Please login with your credentials.");
+          navigate("/");
+        }
       } else {
         setError(response.data.message || "Failed to create account");
       }
@@ -198,7 +203,7 @@ export default function Signup() {
         </div>
 
         <h2 style={{ textAlign: "center", margin: "0 0 6px 0", fontSize: "20px", color: "white" }}>
-          Create Account
+          {role === "staff" ? "Add Staff" : "Create Account"}
         </h2>
         <p style={{ textAlign: "center", margin: "0 0 20px 0", fontSize: "13px", color: "#9ca3af" }}>
           Registering as <strong style={{ color: "#38bdf8", textTransform: "capitalize" }}>{role}</strong>
@@ -557,21 +562,23 @@ export default function Signup() {
             cursor: loading ? "not-allowed" : "pointer"
           }}
         >
-          {loading ? "Creating Account..." : "Create Account"}
+          {loading ? (role === "staff" ? "Adding Staff..." : "Creating Account...") : (role === "staff" ? "Add Staff" : "Create Account")}
         </button>
 
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: "16px",
-            fontSize: "14px",
-            color: "#9ca3af",
-            cursor: "pointer"
-          }}
-          onClick={() => navigate("/")}
-        >
-          Already have an account? <span style={{ color: "#38bdf8", textDecoration: "underline" }}>Login</span>
-        </p>
+        {role !== "staff" && (
+          <p
+            style={{
+              textAlign: "center",
+              marginTop: "16px",
+              fontSize: "14px",
+              color: "#9ca3af",
+              cursor: "pointer"
+            }}
+            onClick={() => navigate("/")}
+          >
+            Already have an account? <span style={{ color: "#38bdf8", textDecoration: "underline" }}>Login</span>
+          </p>
+        )}
       </div>
     </div>
   );

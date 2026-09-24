@@ -100,48 +100,7 @@ export default function SelectRole() {
             <FaChevronRight style={{ color: "#6b7280", fontSize: "14px" }} />
           </div>
 
-          {/* STAFF CARD */}
-          <div
-            onClick={() => selectRole("staff")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "16px 20px",
-              borderRadius: "14px",
-              background: "#262626",
-              border: "1px solid #404040",
-              cursor: "pointer",
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#10b981")}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#404040")}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <div
-                style={{
-                  width: "44px",
-                  height: "44px",
-                  borderRadius: "12px",
-                  background: "#065f46",
-                  color: "#34d399",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "20px"
-                }}
-              >
-                <FaChalkboardTeacher />
-              </div>
-              <div style={{ textAlign: "left" }}>
-                <div style={{ fontWeight: "600", fontSize: "16px", color: "white" }}>Staff</div>
-                <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px" }}>
-                  Post documents for departments & manage study materials
-                </div>
-              </div>
-            </div>
-            <FaChevronRight style={{ color: "#6b7280", fontSize: "14px" }} />
-          </div>
+
 
           {/* ADMIN CARD */}
           <div
