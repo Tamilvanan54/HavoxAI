@@ -8,6 +8,7 @@ import {
 import Login from "./pages/Login";
 import SelectRole from "./pages/SelectRole";
 import Signup from "./pages/Signup";
+import SuperAdminPortal from "./pages/SuperAdminPortal";
 
 
 import Chat from "./pages/Chat";
@@ -52,27 +53,23 @@ function App() {
 
 
         <Route
-
           path="/"
-
           element={<Login />}
-
         />
 
         <Route
-
           path="/select-role"
-
-          element={<SelectRole />}
-
+          element={<Login />}
         />
 
         <Route
+          path="/super-admin"
+          element={<SuperAdminPortal />}
+        />
 
+        <Route
           path="/signup"
-
           element={<Signup />}
-
         />
 
 

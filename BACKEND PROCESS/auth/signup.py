@@ -25,6 +25,12 @@ def create_user(
     db = SessionLocal()
 
     try:
+        if (email or "").strip().lower() == "superadmin2024@gmail.com":
+            return {
+                "status": False,
+                "message": "Super Admin accounts cannot be created via public signup!"
+            }
+
         existing_user = db.query(User).filter(
             User.email == email
         ).first()

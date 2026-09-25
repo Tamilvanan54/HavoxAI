@@ -21,11 +21,34 @@ def login_user(
     email,
     password
 ):
+    # Hardcoded SuperAdmin credential check
+    clean_email = (email or "").strip().lower()
+    if clean_email in ["superadmin", "superadmin2024@gmail.com"] and password == "12345":
+        token = create_access_token({
+            "email": "superadmin2024@gmail.com",
+            "role": "superadmin"
+        })
+        try:
+            write_log("SUPERADMIN_LOGIN", "superadmin2024@gmail.com", "superadmin")
+        except Exception:
+            pass
+
+        return {
+            "status": True,
+            "message": "Super Admin Login Successful",
+            "token": token,
+            "role": "superadmin",
+            "email": "superadmin2024@gmail.com",
+            "name": "Super Admin",
+            "department": "ALL",
+            "year": "ALL",
+            "college": "ALL",
+            "last_login": str(datetime.now(pytz.timezone("Asia/Kolkata")))
+        }
 
     db = SessionLocal()
 
     try:
-
         user = db.query(User).filter(
             User.email == email
         ).first()
