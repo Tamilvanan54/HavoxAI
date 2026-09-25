@@ -247,19 +247,25 @@ class RAGEngine:
         query_lower = query.lower()
 
         math_keywords = [
-            "solve", "calculate", "find", "evaluate", "integrate",
-            "differentiate", "derivative", "integral", "equation",
-            "matrix", "algebra", "calculus", "limit", "theorem", "proof",
-            "domain", "formula", "roots", "quadratic", "sum", "multiply",
-            "function", "f(x)", "y =", "x2y", "range", "inverse",
+            "solve", "calculate", "find", "evaluate", "integrate", "integration",
+            "differentiate", "derivative", "integral", "equation", "formula",
+            "matrix", "matrices", "algebra", "calculus", "limit", "limits", "theorem", "proof", "prove",
+            "domain", "range", "roots", "quadratic", "sum", "multiply", "divide",
+            "function", "functions", "f(x)", "y =", "x2y", "inverse",
             "trigonometry", "sin", "cos", "tan", "log", "ln",
             "logic", "logical", "equivalence", "equivalences", "proposition",
             "propositional", "truth", "table", "statement", "quantifier",
-            "predicates", "inference", "tautology", "contradiction"
+            "predicates", "inference", "tautology", "contradiction",
+            "interval", "intervals", "intersection", "union", "set", "sets", "subset",
+            "subsets", "element", "sequence", "series", "convergence", "divergent",
+            "continuity", "differentiable", "eigenvalue", "vector", "vectors",
+            "probability", "random", "distribution", "variance", "mean", "deviation",
+            "combination", "permutation", "factorial", "bounded", "supremum", "infimum",
+            "axiom", "lemma", "corollary"
         ]
         is_math = (
             any(k in query_lower for k in math_keywords)
-            or any(s in query for s in ["=", "+", "*", "/", "^", "²", "³", "√", "↔", "<->", "->", "≡", "¬", "∧", "∨"])
+            or any(s in query for s in ["=", "+", "*", "/", "^", "²", "³", "√", "↔", "<->", "->", "≡", "¬", "∧", "∨", "∩", "∪", "∈", "∉", "⊂", "⊆", "∫", "∑", "∏", "∀", "∃", "λ", "μ", "σ"])
         )
 
         big_keywords = [
@@ -653,21 +659,24 @@ Question: {query}
 
 Instructions:
 1. {strict_guardrail}
-2. Solve step-by-step using ONLY the Context formulas:
-### Step 1
-...
+2. Solve the mathematical question strictly STEP-BY-STEP based ONLY on the Context.
+3. You MUST format your solution with clear, explicit step subheadings as follows:
 
-### Step 2
-...
+Format your output EXACTLY as follows:
 
-### Final Answer
-...
+### Step 1: Definition & Given Conditions
+[Define the core mathematical concept and extract the given conditions or intervals from Context]
 
-3. Leave a blank line, then write:
+### Step 2: Step-by-Step Derivation & Analysis
+[Provide a clear, thorough step-by-step mathematical proof, derivation, or calculation]
+
+### Step 3: Final Solution & Conclusion
+[State the exact final conclusion and mathematical answer clearly]
+
 ### Example
-[Short verification example]
+[Provide a complete worked numerical or analytical step-by-step example matching the question from Context]
 
-Use LaTeX notation for math (e.g. $x^2 + y^2$ or $$x = \\frac{{-b \\pm \\sqrt{{b^2 - 4ac}}}}{{2a}}$$).
+Use LaTeX notation for all mathematical expressions and symbols (e.g. $A \\cap B$, $A \\cup B$, $(1, 3)$).
 
 Solution:"""
 
