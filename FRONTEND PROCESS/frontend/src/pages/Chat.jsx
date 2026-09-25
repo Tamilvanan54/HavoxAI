@@ -126,11 +126,16 @@ export default function Chat() {
         : (response.data?.messages || response.data?.data || []);
 
       if (Array.isArray(rawList)) {
-        const formattedMessages = rawList.map((m) => {
-          const isUser = (m.sender && (m.sender.toLowerCase() === "user" || m.sender === "you"));
+        const sortedList = [...rawList].sort((a, b) => {
+          if (a.id && b.id) return a.id - b.id;
+          return 0;
+        });
+        const formattedMessages = sortedList.map((m) => {
+          const isUser = (m.sender && (m.sender.toLowerCase() === "user" || m.sender === "you" || m.sender.toLowerCase() === "student"));
           const textContent = m.text || m.message || "";
           const isRefusal = !isUser && textContent.includes("I can answer only from the uploaded study materials");
           return {
+            id: m.id,
             sender: isUser ? "User" : "AI",
             text: textContent,
             streaming: false,
