@@ -282,30 +282,38 @@ export default function SuperAdminPortal() {
                   </tr>
                 </thead>
                 <tbody>
-                  {institutions.map((inst, index) => (
-                    <tr key={inst.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                      <td style={{ padding: "12px", color: "#64748b" }}>{index + 1}</td>
-                      <td style={{ padding: "12px", fontWeight: "600", color: "white" }}>{inst.name}</td>
-                      <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.plan}</td>
-                      <td style={{ padding: "12px" }}>
-                        <span
-                          style={{
-                            padding: "3px 10px",
-                            borderRadius: "12px",
-                            fontSize: "11px",
-                            fontWeight: "600",
-                            background: inst.status === "Active" ? "rgba(52, 211, 153, 0.15)" : "rgba(251, 191, 36, 0.15)",
-                            color: inst.status === "Active" ? "#34d399" : "#fbbf24"
-                          }}
-                        >
-                          {inst.status}
-                        </span>
+                  {institutions.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>
+                        No registered colleges or schools found in the database.
                       </td>
-                      <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.students.toLocaleString()}</td>
-                      <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.staff}</td>
-                      <td style={{ padding: "12px", color: "#94a3b8" }}>{inst.lastLogin}</td>
                     </tr>
-                  ))}
+                  ) : (
+                    institutions.map((inst, index) => (
+                      <tr key={inst.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                        <td style={{ padding: "12px", color: "#64748b" }}>{index + 1}</td>
+                        <td style={{ padding: "12px", fontWeight: "600", color: "white" }}>{inst.name}</td>
+                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.plan}</td>
+                        <td style={{ padding: "12px" }}>
+                          <span
+                            style={{
+                              padding: "3px 10px",
+                              borderRadius: "12px",
+                              fontSize: "11px",
+                              fontWeight: "600",
+                              background: inst.status === "Active" ? "rgba(52, 211, 153, 0.15)" : "rgba(251, 191, 36, 0.15)",
+                              color: inst.status === "Active" ? "#34d399" : "#fbbf24"
+                            }}
+                          >
+                            {inst.status}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.students.toLocaleString()}</td>
+                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.staff}</td>
+                        <td style={{ padding: "12px", color: "#94a3b8" }}>{inst.lastLogin}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -360,34 +368,42 @@ export default function SuperAdminPortal() {
                 </tr>
               </thead>
               <tbody>
-                {institutions
-                  .filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .map((inst, index) => (
-                    <tr key={inst.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                      <td style={{ padding: "12px", color: "#64748b" }}>{index + 1}</td>
-                      <td style={{ padding: "12px", fontWeight: "600", color: "white" }}>{inst.name}</td>
-                      <td style={{ padding: "12px", color: "#94a3b8" }}>{inst.code}</td>
-                      <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.plan}</td>
-                      <td style={{ padding: "12px" }}>
-                        <span
-                          style={{
-                            padding: "3px 10px",
-                            borderRadius: "12px",
-                            fontSize: "11px",
-                            fontWeight: "600",
-                            background: inst.status === "Active" ? "rgba(52, 211, 153, 0.15)" : "rgba(251, 191, 36, 0.15)",
-                            color: inst.status === "Active" ? "#34d399" : "#fbbf24"
-                          }}
-                        >
-                          {inst.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.students.toLocaleString()}</td>
-                      <td style={{ padding: "12px", color: "#38bdf8", cursor: "pointer", fontWeight: "600" }}>
-                        •••
-                      </td>
-                    </tr>
-                  ))}
+                {institutions.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>
+                      No registered colleges or schools found in the database.
+                    </td>
+                  </tr>
+                ) : (
+                  institutions
+                    .filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .map((inst, index) => (
+                      <tr key={inst.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                        <td style={{ padding: "12px", color: "#64748b" }}>{index + 1}</td>
+                        <td style={{ padding: "12px", fontWeight: "600", color: "white" }}>{inst.name}</td>
+                        <td style={{ padding: "12px", color: "#94a3b8" }}>{inst.code}</td>
+                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.plan}</td>
+                        <td style={{ padding: "12px" }}>
+                          <span
+                            style={{
+                              padding: "3px 10px",
+                              borderRadius: "12px",
+                              fontSize: "11px",
+                              fontWeight: "600",
+                              background: inst.status === "Active" ? "rgba(52, 211, 153, 0.15)" : "rgba(251, 191, 36, 0.15)",
+                              color: inst.status === "Active" ? "#34d399" : "#fbbf24"
+                            }}
+                          >
+                            {inst.status}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.students.toLocaleString()}</td>
+                        <td style={{ padding: "12px", color: "#38bdf8", cursor: "pointer", fontWeight: "600" }}>
+                          •••
+                        </td>
+                      </tr>
+                    ))
+                )}
               </tbody>
             </table>
           </div>
@@ -434,36 +450,44 @@ export default function SuperAdminPortal() {
                 </tr>
               </thead>
               <tbody>
-                {users
-                  .filter(u => roleFilter === "ALL" || u.role === roleFilter)
-                  .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .map((user) => (
-                    <tr key={user.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                      <td style={{ padding: "12px", fontWeight: "600", color: "white" }}>{user.name}</td>
-                      <td style={{ padding: "12px", color: "#38bdf8" }}>{user.email}</td>
-                      <td style={{ padding: "12px", color: "#cbd5e1" }}>{user.institution}</td>
-                      <td style={{ padding: "12px" }}>
-                        <span
-                          style={{
-                            padding: "3px 10px",
-                            borderRadius: "12px",
-                            fontSize: "11px",
-                            fontWeight: "600",
-                            background: user.role === "Student" ? "rgba(56, 189, 248, 0.15)" : user.role === "Staff" ? "rgba(168, 85, 247, 0.15)" : "rgba(245, 158, 11, 0.15)",
-                            color: user.role === "Student" ? "#38bdf8" : user.role === "Staff" ? "#c084fc" : "#fbbf24"
-                          }}
-                        >
-                          {user.role}
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px" }}>
-                        <span style={{ padding: "3px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "600", background: "rgba(52, 211, 153, 0.15)", color: "#34d399" }}>
-                          Active
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px", color: "#94a3b8" }}>{user.lastLogin}</td>
-                    </tr>
-                  ))}
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>
+                      No registered users found in the database.
+                    </td>
+                  </tr>
+                ) : (
+                  users
+                    .filter(u => roleFilter === "ALL" || u.role === roleFilter)
+                    .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .map((user) => (
+                      <tr key={user.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                        <td style={{ padding: "12px", fontWeight: "600", color: "white" }}>{user.name}</td>
+                        <td style={{ padding: "12px", color: "#38bdf8" }}>{user.email}</td>
+                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{user.institution}</td>
+                        <td style={{ padding: "12px" }}>
+                          <span
+                            style={{
+                              padding: "3px 10px",
+                              borderRadius: "12px",
+                              fontSize: "11px",
+                              fontWeight: "600",
+                              background: user.role === "Student" ? "rgba(56, 189, 248, 0.15)" : user.role === "Staff" ? "rgba(168, 85, 247, 0.15)" : "rgba(245, 158, 11, 0.15)",
+                              color: user.role === "Student" ? "#38bdf8" : user.role === "Staff" ? "#c084fc" : "#fbbf24"
+                            }}
+                          >
+                            {user.role}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px" }}>
+                          <span style={{ padding: "3px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "600", background: "rgba(52, 211, 153, 0.15)", color: "#34d399" }}>
+                            Active
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px", color: "#94a3b8" }}>{user.lastLogin}</td>
+                      </tr>
+                    ))
+                )}
               </tbody>
             </table>
           </div>
@@ -474,36 +498,41 @@ export default function SuperAdminPortal() {
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "30px" }}>
               {[
-                { title: "Total Logins", val: "45,230", change: "+12%" },
-                { title: "Total Queries", val: "38,742", change: "+18%" },
-                { title: "Documents Uploaded", val: "5,420", change: "+22%" },
-                { title: "Storage Used", val: "1.2 TB", change: "+10%" }
+                { title: "Total Registered Users", val: users.length.toLocaleString(), change: "Live" },
+                { title: "Active Institutions", val: stats.active_institutions.toLocaleString(), change: "Live" },
+                { title: "Total Students", val: stats.total_students.toLocaleString(), change: "Live" },
+                { title: "Total Staff", val: stats.total_staff.toLocaleString(), change: "Live" }
               ].map((stat, idx) => (
                 <div key={idx} style={{ background: "#0f172a", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "20px", borderRadius: "16px" }}>
                   <div style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "8px" }}>{stat.title}</div>
                   <div style={{ fontSize: "24px", fontWeight: "800", color: "white", marginBottom: "4px" }}>{stat.val}</div>
-                  <div style={{ fontSize: "12px", color: "#34d399" }}>↑ {stat.change}</div>
+                  <div style={{ fontSize: "12px", color: "#34d399" }}>● {stat.change}</div>
                 </div>
               ))}
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "20px" }}>
               <div style={{ background: "#0f172a", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "24px", borderRadius: "16px" }}>
-                <h4 style={{ margin: "0 0 16px 0", color: "white", fontSize: "15px" }}>Daily Active Users Trend</h4>
-                <div style={{ height: "180px", display: "flex", alignItems: "flex-end", gap: "12px", paddingBottom: "10px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-                  {[40, 65, 80, 55, 90, 110, 130, 95, 120, 140, 160].map((h, i) => (
-                    <div key={i} style={{ flex: 1, background: "linear-gradient(180deg, #38bdf8 0%, #2563eb 100%)", height: `${h}px`, borderRadius: "6px 6px 0 0" }} />
-                  ))}
+                <h4 style={{ margin: "0 0 16px 0", color: "white", fontSize: "15px" }}>Registered User Distribution</h4>
+                <div style={{ height: "180px", display: "flex", alignItems: "flex-end", gap: "24px", paddingBottom: "10px", borderBottom: "1px solid rgba(255,255,255,0.1)", justifyContent: "center" }}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "12px", color: "#38bdf8" }}>{stats.total_students}</span>
+                    <div style={{ width: "60px", background: "linear-gradient(180deg, #38bdf8 0%, #2563eb 100%)", height: `${Math.min(140, Math.max(20, stats.total_students * 10))}px`, borderRadius: "6px 6px 0 0" }} />
+                    <span style={{ fontSize: "12px", color: "#94a3b8" }}>Students</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "12px", color: "#c084fc" }}>{stats.total_staff}</span>
+                    <div style={{ width: "60px", background: "linear-gradient(180deg, #c084fc 0%, #9333ea 100%)", height: `${Math.min(140, Math.max(20, stats.total_staff * 10))}px`, borderRadius: "6px 6px 0 0" }} />
+                    <span style={{ fontSize: "12px", color: "#94a3b8" }}>Staff</span>
+                  </div>
                 </div>
               </div>
 
               <div style={{ background: "#0f172a", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "24px", borderRadius: "16px" }}>
-                <h4 style={{ margin: "0 0 16px 0", color: "white", fontSize: "15px" }}>Subscription Plans</h4>
+                <h4 style={{ margin: "0 0 16px 0", color: "white", fontSize: "15px" }}>Institution Summary</h4>
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
-                  <div><span style={{ color: "#38bdf8" }}>● Professional</span>: 45%</div>
-                  <div><span style={{ color: "#c084fc" }}>● Enterprise</span>: 30%</div>
-                  <div><span style={{ color: "#fbbf24" }}>● Basic</span>: 15%</div>
-                  <div><span style={{ color: "#94a3b8" }}>● Trial</span>: 10%</div>
+                  <div><span style={{ color: "#38bdf8" }}>● Total Colleges & Schools</span>: {institutions.length}</div>
+                  <div><span style={{ color: "#34d399" }}>● Total Registered Users</span>: {users.length}</div>
                 </div>
               </div>
             </div>
@@ -514,16 +543,16 @@ export default function SuperAdminPortal() {
         {activeTab === "subscriptions" && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
             {[
-              { name: "Basic Tier", price: "₹19,999 / mo", users: "Up to 1,000 Users", color: "#fbbf24" },
-              { name: "Professional Tier", price: "₹49,999 / mo", users: "Up to 5,000 Users", color: "#38bdf8" },
-              { name: "Enterprise Tier", price: "₹99,999 / mo", users: "Unlimited Users", color: "#c084fc" }
+              { name: "Basic Tier", price: "Free Trial", users: "Up to 100 Users", color: "#fbbf24" },
+              { name: "Professional Tier", price: "Standard", users: "Up to 5,000 Users", color: "#38bdf8" },
+              { name: "Enterprise Tier", price: "Full Suite", users: "Unlimited Users", color: "#c084fc" }
             ].map((plan, idx) => (
               <div key={idx} style={{ background: "#0f172a", border: `1px solid ${plan.color}`, padding: "28px", borderRadius: "16px" }}>
                 <h3 style={{ margin: "0 0 10px 0", color: plan.color }}>{plan.name}</h3>
                 <div style={{ fontSize: "26px", fontWeight: "800", color: "white", marginBottom: "8px" }}>{plan.price}</div>
                 <p style={{ color: "#94a3b8", fontSize: "13px", marginBottom: "20px" }}>{plan.users}</p>
                 <button style={{ width: "100%", padding: "10px", borderRadius: "10px", border: "none", background: plan.color, color: "black", fontWeight: "700", cursor: "pointer" }}>
-                  Manage Plan
+                  Plan Active
                 </button>
               </div>
             ))}
@@ -540,24 +569,28 @@ export default function SuperAdminPortal() {
                   <th style={{ padding: "12px" }}>Timestamp</th>
                   <th style={{ padding: "12px" }}>User</th>
                   <th style={{ padding: "12px" }}>Action</th>
-                  <th style={{ padding: "12px" }}>IP Address</th>
+                  <th style={{ padding: "12px" }}>Institution</th>
                   <th style={{ padding: "12px" }}>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  { time: "25 Sep 2026, 11:52 AM", user: "superadmin2024@gmail.com", action: "SUPERADMIN_LOGIN", ip: "157.20.172.111", status: "Success" },
-                  { time: "25 Sep 2026, 11:30 AM", user: "ravi@abc.edu.in", action: "USER_LOGIN", ip: "106.213.42.12", status: "Success" },
-                  { time: "25 Sep 2026, 10:45 AM", user: "priya@abc.edu.in", action: "DOCUMENT_UPLOAD", ip: "106.213.42.18", status: "Success" }
-                ].map((log, idx) => (
-                  <tr key={idx} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                    <td style={{ padding: "12px", color: "#94a3b8" }}>{log.time}</td>
-                    <td style={{ padding: "12px", color: "white" }}>{log.user}</td>
-                    <td style={{ padding: "12px", color: "#38bdf8" }}>{log.action}</td>
-                    <td style={{ padding: "12px", color: "#cbd5e1" }}>{log.ip}</td>
-                    <td style={{ padding: "12px", color: "#34d399", fontWeight: "600" }}>{log.status}</td>
+                {users.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>
+                      No user audit logs available.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  users.map((log, idx) => (
+                    <tr key={idx} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                      <td style={{ padding: "12px", color: "#94a3b8" }}>{log.lastLogin}</td>
+                      <td style={{ padding: "12px", color: "white" }}>{log.email}</td>
+                      <td style={{ padding: "12px", color: "#38bdf8" }}>USER_REGISTERED</td>
+                      <td style={{ padding: "12px", color: "#cbd5e1" }}>{log.institution}</td>
+                      <td style={{ padding: "12px", color: "#34d399", fontWeight: "600" }}>Active</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
