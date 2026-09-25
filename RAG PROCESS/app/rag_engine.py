@@ -674,9 +674,7 @@ Format your output EXACTLY as follows:
 [State the exact final conclusion and mathematical answer clearly]
 
 ### Example
-[Provide a complete worked numerical or analytical step-by-step example matching the question from Context]
-
-Use LaTeX notation for all mathematical expressions and symbols (e.g. $A \\cap B$, $A \\cup B$, $(1, 3)$).
+Use clean standard mathematical symbols (e.g. $A \\cap B$, $A \\cup B$, $y = \\sqrt{{5 - x}} - x$). Do NOT output raw bracket delimiters like \\[, \\], \\(, or \\).
 
 Solution:"""
 

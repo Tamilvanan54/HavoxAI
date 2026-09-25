@@ -49,41 +49,83 @@ const formatMathText = (text) => {
   if (!text || !text.trim()) return "";
   let formatted = text;
 
-  // Defensive check: strip any residual raw SSE protocol string if unparsed
+  // 1. Defensive check: strip any residual raw SSE protocol string if unparsed
   formatted = formatted.replace(/^event:\s*\w+\s*\n+data:\s*\{.*?\}/gis, "");
   formatted = formatted.replace(/(?:\n|^)data:\s*\{.*?\}/gis, "");
   formatted = formatted.replace(/^event:.*$/gm, "");
 
-  // Deduplicate any repeated ### Example headings
+  // 2. Deduplicate any repeated ### Example headings
   formatted = formatted.replace(/(?:\n*\s*###?\s*(?:Example|[A-Za-z0-9_\s]*Example):?\s*)+/gi, "\n\n### Example\n");
 
-  // Convert LaTeX fractions and square roots to clean readable notation
+  // 3. Remove raw LaTeX bracket delimiters \( \), \[ \], \\( \\), \\[ \\]
+  formatted = formatted.replace(/\\\[\s*/g, "").replace(/\s*\\\]/g, "");
+  formatted = formatted.replace(/\\\(\s*/g, "").replace(/\s*\\\)/g, "");
+  formatted = formatted.replace(/\\\[/g, "").replace(/\\\]/g, "");
+  formatted = formatted.replace(/\\\(/g, "").replace(/\\\)/g, "");
+  formatted = formatted.replace(/\[\s*\]/g, "");
+
+  // Remove lines that consist only of leftover brackets, slashes or whitespace
+  formatted = formatted.split("\n").filter(line => !/^\s*[\\[\\]()\/]+\s*$/.test(line)).join("\n");
+
+  // 4. Convert LaTeX fractions and square roots to clean readable notation
   formatted = formatted.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1)/($2)");
   formatted = formatted.replace(/\\sqrt\{([^}]+)\}/g, "√($1)");
   formatted = formatted.replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, "√$1");
   formatted = formatted.replace(/\\text\{([^}]+)\}/g, "$1");
   formatted = formatted.replace(/\\mathrm\{([^}]+)\}/g, "$1");
 
-  // Convert LaTeX math symbols to Unicode
+  // 5. Convert comprehensive set theory, calculus, logic & algebraic symbols to Unicode
   formatted = formatted
+    .replace(/\\cap/g, "∩")
+    .replace(/\\cup/g, "∪")
+    .replace(/\\in/g, "∈")
+    .replace(/\\notin/g, "∉")
+    .replace(/\\subset/g, "⊂")
+    .replace(/\\subseteq/g, "⊆")
+    .replace(/\\forall/g, "∀")
+    .replace(/\\exists/g, "∃")
+    .replace(/\\emptyset|\\empty/g, "∅")
+    .replace(/\\approx/g, "≈")
     .replace(/\\pm/g, "±")
+    .replace(/\\mp/g, "∓")
     .replace(/\\sqrt/g, "√")
     .replace(/\\infty/g, "∞")
     .replace(/\\mathbb\{R\}/g, "ℝ")
+    .replace(/\\mathbb\{N\}/g, "ℕ")
+    .replace(/\\mathbb\{Z\}/g, "ℤ")
+    .replace(/\\mathbb\{Q\}/g, "ℚ")
     .replace(/\\cdot/g, "·")
     .replace(/\\times/g, "×")
     .replace(/\\div/g, "÷")
     .replace(/\\geq/g, "≥")
     .replace(/\\leq/g, "≤")
     .replace(/\\neq/g, "≠")
+    .replace(/\\to|\\rightarrow/g, "→")
     .replace(/\\Rightarrow/g, "⇒")
     .replace(/\\Leftrightarrow/g, "⇔")
+    .replace(/\\alpha/g, "α")
+    .replace(/\\beta/g, "β")
+    .replace(/\\gamma/g, "γ")
+    .replace(/\\delta/g, "δ")
+    .replace(/\\theta/g, "θ")
+    .replace(/\\lambda/g, "λ")
+    .replace(/\\mu/g, "μ")
+    .replace(/\\pi/g, "π")
+    .replace(/\\sigma/g, "σ")
+    .replace(/\\sum/g, "∑")
+    .replace(/\\prod/g, "∏")
+    .replace(/\\int/g, "∫")
     .replace(/\^2/g, "²")
-    .replace(/\^3/g, "³");
+    .replace(/\^3/g, "³")
+    .replace(/\^4/g, "⁴")
+    .replace(/\^n/g, "ⁿ");
 
-  // Force step headings and Example onto separate lines with clean spacing
+  // 6. Force step headings and Example onto separate lines with clean spacing
   formatted = formatted.replace(/([^\n])\s*(###?\s*Step|\bStep\s+\d+:)/g, "$1\n\n$2");
   formatted = formatted.replace(/([^\n])\s*(###?\s*Final Answer:|\bFinal Answer:)/g, "$1\n\n$2");
+
+  // Clean up any extra empty lines (max 2 consecutive newlines)
+  formatted = formatted.replace(/\n{3,}/g, "\n\n");
 
   return formatted.trim();
 };
