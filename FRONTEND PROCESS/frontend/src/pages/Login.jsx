@@ -258,8 +258,8 @@ export default function Login() {
                 type="button"
                 onClick={() => {
                   setMode("superadmin");
-                  setEmail("SuperAdmin");
-                  setPassword("12345");
+                  setEmail("");
+                  setPassword("");
                   setError("");
                 }}
                 style={{
