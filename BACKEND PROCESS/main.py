@@ -298,8 +298,96 @@ def profile(
 
 @app.get("/users")
 def users(college: str | None = None):
-
     return get_all_users(college=college)
+
+
+@app.get("/superadmin-overview")
+def superadmin_overview():
+    db = SessionLocal()
+    try:
+        all_users = db.query(User).all()
+        
+        # Calculate overall platform stats
+        total_students = sum(1 for u in all_users if u.role == "student")
+        total_staff = sum(1 for u in all_users if u.role == "staff")
+        total_admins = sum(1 for u in all_users if u.role == "admin")
+
+        # Group users by college / school
+        inst_map = {}
+        for u in all_users:
+            clg = (getattr(u, "college", "") or "").strip()
+            if not clg or clg.upper() == "ALL":
+                continue
+            
+            if clg not in inst_map:
+                inst_map[clg] = {
+                    "name": clg,
+                    "students": 0,
+                    "staff": 0,
+                    "admins": 0,
+                    "last_login": None,
+                    "type": "School" if ("school" in clg.lower() or (getattr(u, "department", "") or "").startswith("Class ")) else "College"
+                }
+            
+            if u.role == "student":
+                inst_map[clg]["students"] += 1
+            elif u.role == "staff":
+                inst_map[clg]["staff"] += 1
+            elif u.role == "admin":
+                inst_map[clg]["admins"] += 1
+            
+            u_last = getattr(u, "last_login", None) or getattr(u, "created_at", None)
+            if u_last:
+                if not inst_map[clg]["last_login"] or str(u_last) > str(inst_map[clg]["last_login"]):
+                    inst_map[clg]["last_login"] = str(u_last)
+
+        # Convert institutions map to list
+        institutions_list = []
+        idx = 1
+        for name, data in inst_map.items():
+            institutions_list.append({
+                "id": idx,
+                "name": name,
+                "code": f"INST{idx:03d}",
+                "type": data["type"],
+                "plan": "Enterprise" if data["students"] > 50 else "Professional",
+                "status": "Active",
+                "students": data["students"],
+                "staff": data["staff"],
+                "lastLogin": data["last_login"] or "Recent"
+            })
+            idx += 1
+
+        # Format user list for SuperAdmin table
+        user_list = []
+        for u in all_users:
+            if u.role == "superadmin":
+                continue
+            user_list.append({
+                "id": u.id,
+                "name": u.name or u.email.split("@")[0],
+                "email": u.email,
+                "institution": getattr(u, "college", "HavoxAI Platform") or "HavoxAI Platform",
+                "role": (u.role or "student").capitalize(),
+                "status": "Active",
+                "lastLogin": str(u.last_login) if u.last_login else "Recent"
+            })
+
+        return {
+            "status": True,
+            "total_institutions": len(institutions_list),
+            "active_institutions": len(institutions_list),
+            "total_students": total_students,
+            "total_staff": total_staff,
+            "total_users": len(user_list),
+            "institutions": institutions_list,
+            "users": user_list
+        }
+    except Exception as e:
+        print(f"❌ SuperAdmin overview error: {e}")
+        return {"status": False, "message": str(e)}
+    finally:
+        db.close()
 
 
 

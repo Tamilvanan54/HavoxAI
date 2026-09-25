@@ -465,6 +465,12 @@ export default function Login() {
                 />
                 Remember Me
               </label>
+              <span
+                onClick={() => navigate("/forgot-password")}
+                style={{ color: "#c084fc", cursor: "pointer", textDecoration: "underline" }}
+              >
+                Forgot Password?
+              </span>
             </div>
 
             <button
@@ -481,30 +487,11 @@ export default function Login() {
                 fontSize: "15px",
                 cursor: loading ? "not-allowed" : "pointer",
                 boxShadow: "0 4px 15px rgba(168, 85, 247, 0.4)",
-                marginBottom: "16px"
+                marginBottom: "20px"
               }}
             >
               {loading ? "Signing In..." : "Sign In"}
             </button>
-
-            {/* 2FA BADGE */}
-            <div
-              style={{
-                background: "rgba(30, 41, 59, 0.6)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                padding: "10px",
-                borderRadius: "12px",
-                fontSize: "12px",
-                color: "#cbd5e1",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                marginBottom: "16px"
-              }}
-            >
-              <FaShieldAlt style={{ color: "#38bdf8" }} /> Two-Factor Authentication (2FA) Enabled
-            </div>
 
             {/* BACK TO USER LOGIN */}
             <div style={{ textAlign: "center", fontSize: "14px" }}>

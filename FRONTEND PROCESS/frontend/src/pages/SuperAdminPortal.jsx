@@ -27,22 +27,18 @@ export default function SuperAdminPortal() {
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   // Institutions state
-  const [institutions, setInstitutions] = useState([
-    { id: 1, name: "ABC Engineering College", code: "ABC001", plan: "Professional", status: "Active", students: 2450, staff: 180, lastLogin: "25 Sep 2026, 11:52 AM" },
-    { id: 2, name: "XYZ University", code: "XYZ002", plan: "Enterprise", status: "Active", students: 5820, staff: 320, lastLogin: "25 Sep 2026, 10:34 AM" },
-    { id: 3, name: "DEF Institute", code: "DEF003", plan: "Basic", status: "Trial", students: 1230, staff: 95, lastLogin: "25 Sep 2026, 09:45 AM" },
-    { id: 4, name: "GHI College", code: "GHI004", plan: "Professional", status: "Active", students: 980, staff: 70, lastLogin: "25 Sep 2026, 09:21 AM" },
-    { id: 5, name: "JKL University", code: "JKL005", plan: "Enterprise", status: "Active", students: 3420, staff: 210, lastLogin: "25 Sep 2026, 08:16 AM" }
-  ]);
+  const [institutions, setInstitutions] = useState([]);
 
   // Users state
-  const [users, setUsers] = useState([
-    { id: 1, name: "Ravi Kumar", email: "ravi@abc.edu.in", institution: "ABC Engineering College", role: "Student", status: "Active", lastLogin: "25 Sep 2026, 11:30 AM" },
-    { id: 2, name: "Priya Sharma", email: "priya@abc.edu.in", institution: "ABC Engineering College", role: "Staff", status: "Active", lastLogin: "25 Sep 2026, 10:45 AM" },
-    { id: 3, name: "Arun Thomas", email: "arun@xyz.edu.in", institution: "XYZ University", role: "Admin", status: "Active", lastLogin: "25 Sep 2026, 09:32 AM" },
-    { id: 4, name: "Sneha Patel", email: "sneha@def.edu.in", institution: "DEF Institute", role: "Student", status: "Active", lastLogin: "25 Sep 2026, 07:14 AM" },
-    { id: 5, name: "Vikram Singh", email: "vikram@ghi.edu.in", institution: "GHI College", role: "Staff", status: "Active", lastLogin: "25 Sep 2026, 05:36 AM" }
-  ]);
+  const [users, setUsers] = useState([]);
+
+  // Stats state
+  const [stats, setStats] = useState({
+    total_institutions: 0,
+    active_institutions: 0,
+    total_students: 0,
+    total_staff: 0
+  });
 
   // Modal for adding institution
   const [showAddModal, setShowAddModal] = useState(false);
@@ -54,7 +50,28 @@ export default function SuperAdminPortal() {
     const role = (localStorage.getItem("role") || "").toLowerCase();
     if (role !== "superadmin") {
       navigate("/");
+      return;
     }
+
+    const fetchOverview = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/superadmin-overview`);
+        if (res.data && res.data.status) {
+          if (res.data.institutions) setInstitutions(res.data.institutions);
+          if (res.data.users) setUsers(res.data.users);
+          setStats({
+            total_institutions: res.data.total_institutions || (res.data.institutions ? res.data.institutions.length : 0),
+            active_institutions: res.data.active_institutions || (res.data.institutions ? res.data.institutions.length : 0),
+            total_students: res.data.total_students || 0,
+            total_staff: res.data.total_staff || 0
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch superadmin overview:", err);
+      }
+    };
+
+    fetchOverview();
   }, [navigate]);
 
   const handleAddInstitution = () => {
@@ -213,10 +230,10 @@ export default function SuperAdminPortal() {
             {/* STAT CARDS */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "30px" }}>
               {[
-                { title: "Total Institutions", count: "24", change: "+2 this month", color: "#38bdf8", icon: <FaUniversity /> },
-                { title: "Active Institutions", count: "21", change: "+1 this month", color: "#34d399", icon: <FaCheckCircle /> },
-                { title: "Total Students", count: "18,450", change: "+6% this month", color: "#c084fc", icon: <FaUsers /> },
-                { title: "Total Staff", count: "1,240", change: "+4% this month", color: "#fbbf24", icon: <FaUserShield /> }
+                { title: "Total Institutions", count: stats.total_institutions, change: "Live", color: "#38bdf8", icon: <FaUniversity /> },
+                { title: "Active Institutions", count: stats.active_institutions, change: "Live", color: "#34d399", icon: <FaCheckCircle /> },
+                { title: "Total Students", count: stats.total_students, change: "Live", color: "#c084fc", icon: <FaUsers /> },
+                { title: "Total Staff", count: stats.total_staff, change: "Live", color: "#fbbf24", icon: <FaShieldAlt /> }
               ].map((card, i) => (
                 <div
                   key={i}
