@@ -101,6 +101,20 @@ export default function SuperAdminPortal() {
     navigate("/");
   };
 
+  const handleDeleteUser = async (userId, userEmail) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete user '${userEmail}'?`);
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/delete-user/${userId}`);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      alert("User deleted successfully!");
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      alert("Failed to delete user!");
+    }
+  };
+
   return (
     <div
       style={{
@@ -412,12 +426,25 @@ export default function SuperAdminPortal() {
         {/* 3. USERS TAB */}
         {activeTab === "users" && (
           <div style={{ background: "#0f172a", borderRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "24px" }}>
+            <h2 style={{ fontSize: "20px", fontWeight: "800", margin: "0 0 20px 0", color: "white", display: "flex", alignItems: "center", gap: "10px" }}>
+              👥 Users Management
+            </h2>
+
+            {/* Total Users Card */}
+            <div style={{ background: "#1e293b", padding: "16px 24px", borderRadius: "12px", width: "220px", marginBottom: "25px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+              <div style={{ fontSize: "28px", fontWeight: "800", color: "white", margin: "0 0 4px 0" }}>
+                {users.length}
+              </div>
+              <div style={{ fontSize: "13px", color: "#94a3b8" }}>Total Users</div>
+            </div>
+
+            {/* Search & Role Filter */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(30, 41, 59, 0.8)", padding: "8px 14px", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.1)", width: "300px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(30, 41, 59, 0.8)", padding: "8px 14px", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.1)", width: "350px" }}>
                 <FaSearch style={{ color: "#94a3b8" }} />
                 <input
                   type="text"
-                  placeholder="Search by name, email, or role..."
+                  placeholder="Search user by name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   style={{ background: "transparent", border: "none", color: "white", outline: "none", width: "100%", fontSize: "13px" }}
@@ -438,53 +465,88 @@ export default function SuperAdminPortal() {
               </div>
             </div>
 
-            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+            {/* Users Table */}
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px", background: "#1e293b", borderRadius: "12px", overflow: "hidden" }}>
               <thead>
-                <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "#94a3b8" }}>
-                  <th style={{ padding: "12px" }}>Name</th>
-                  <th style={{ padding: "12px" }}>Email</th>
-                  <th style={{ padding: "12px" }}>Institution</th>
-                  <th style={{ padding: "12px" }}>Role</th>
-                  <th style={{ padding: "12px" }}>Status</th>
-                  <th style={{ padding: "12px" }}>Last Login</th>
+                <tr style={{ borderBottom: "1px solid #334155", color: "#94a3b8" }}>
+                  <th style={{ padding: "14px" }}>ID</th>
+                  <th style={{ padding: "14px" }}>Name</th>
+                  <th style={{ padding: "14px" }}>Email</th>
+                  <th style={{ padding: "14px" }}>Institution</th>
+                  <th style={{ padding: "14px" }}>Role</th>
+                  <th style={{ padding: "14px" }}>Profile</th>
+                  <th style={{ padding: "14px" }}>Delete</th>
                 </tr>
               </thead>
               <tbody>
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan="6" style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>
-                      No registered users found in the database.
+                    <td colSpan="7" style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>
+                      No Users Found
                     </td>
                   </tr>
                 ) : (
                   users
-                    .filter(u => roleFilter === "ALL" || u.role === roleFilter)
+                    .filter(u => roleFilter === "ALL" || u.role.toLowerCase() === roleFilter.toLowerCase())
                     .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase()))
                     .map((user) => (
                       <tr key={user.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                        <td style={{ padding: "12px", fontWeight: "600", color: "white" }}>{user.name}</td>
-                        <td style={{ padding: "12px", color: "#38bdf8" }}>{user.email}</td>
-                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{user.institution}</td>
-                        <td style={{ padding: "12px" }}>
+                        <td style={{ padding: "14px", color: "#94a3b8", fontWeight: "600" }}>{user.id}</td>
+                        <td style={{ padding: "14px", fontWeight: "600", color: "white" }}>{user.name}</td>
+                        <td style={{ padding: "14px", color: "#cbd5e1" }}>{user.email}</td>
+                        <td style={{ padding: "14px", color: "#38bdf8" }}>{user.institution}</td>
+                        <td style={{ padding: "14px" }}>
                           <span
                             style={{
-                              padding: "3px 10px",
-                              borderRadius: "12px",
-                              fontSize: "11px",
+                              background: user.role?.toLowerCase() === "admin" ? "#ef4444" : user.role?.toLowerCase() === "staff" ? "#f59e0b" : "#22c55e",
+                              color: "white",
+                              padding: "5px 12px",
+                              borderRadius: "20px",
+                              fontSize: "13px",
                               fontWeight: "600",
-                              background: user.role === "Student" ? "rgba(56, 189, 248, 0.15)" : user.role === "Staff" ? "rgba(168, 85, 247, 0.15)" : "rgba(245, 158, 11, 0.15)",
-                              color: user.role === "Student" ? "#38bdf8" : user.role === "Staff" ? "#c084fc" : "#fbbf24"
+                              display: "inline-block"
                             }}
                           >
-                            {user.role}
+                            {user.role?.toLowerCase()}
                           </span>
                         </td>
-                        <td style={{ padding: "12px" }}>
-                          <span style={{ padding: "3px 10px", borderRadius: "12px", fontSize: "11px", fontWeight: "600", background: "rgba(52, 211, 153, 0.15)", color: "#34d399" }}>
-                            Active
-                          </span>
+                        {/* Profile Button */}
+                        <td style={{ padding: "14px" }}>
+                          <button
+                            onClick={() => navigate(`/user-profile/${user.id}`)}
+                            title="View Profile"
+                            style={{
+                              background: "#3b82f6",
+                              color: "white",
+                              border: "none",
+                              padding: "6px 14px",
+                              borderRadius: "8px",
+                              cursor: "pointer",
+                              fontSize: "16px",
+                              fontWeight: "bold"
+                            }}
+                          >
+                            →
+                          </button>
                         </td>
-                        <td style={{ padding: "12px", color: "#94a3b8" }}>{user.lastLogin}</td>
+                        {/* Delete Button */}
+                        <td style={{ padding: "14px" }}>
+                          <button
+                            onClick={() => handleDeleteUser(user.id, user.email)}
+                            title="Delete User"
+                            style={{
+                              background: "#ef4444",
+                              color: "white",
+                              border: "none",
+                              padding: "6px 12px",
+                              borderRadius: "8px",
+                              cursor: "pointer",
+                              fontSize: "15px"
+                            }}
+                          >
+                            🗑
+                          </button>
+                        </td>
                       </tr>
                     ))
                 )}
