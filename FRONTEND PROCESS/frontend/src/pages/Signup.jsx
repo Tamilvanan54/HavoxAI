@@ -65,12 +65,68 @@ const TN_COLLEGES = [
   "Other",
 ];
 
+const TN_SCHOOLS = [
+  "St. Bede's Anglo Indian Higher Secondary School, Chennai",
+  "Don Bosco Higher Secondary School, Egmore, Chennai",
+  "Padma Seshadri Bala Bhavan (PSBB) Senior Secondary School, Chennai",
+  "DAV Higher Secondary School, Gopalapuram, Chennai",
+  "Vidya Mandir Senior Secondary School, Mylapore, Chennai",
+  "St. Patrick's Anglo Indian Higher Secondary School, Chennai",
+  "Santhome Higher Secondary School, Chennai",
+  "Bhavan's Rajaji Vidyashram, Chennai",
+  "Hindu Higher Secondary School, Triplicane, Chennai",
+  "Chettinad Vidyashram, Chennai",
+  "SBOA School and Junior College, Chennai",
+  "St. John's International Residential School, Chennai",
+  "St. Joseph's Higher Secondary School, Cuddalore",
+  "Stanes Anglo Indian Higher Secondary School, Coimbatore",
+  "PSG Sarvajana Higher Secondary School, Coimbatore",
+  "Lisieux Matriculation Higher Secondary School, Coimbatore",
+  "G.D. Matriculation Higher Secondary School, Coimbatore",
+  "Perks Matriculation Higher Secondary School, Coimbatore",
+  "Bharatiya Vidya Bhavan Higher Secondary School, Coimbatore",
+  "Chinthamani Matriculation School, Coimbatore",
+  "TVS Matriculation Higher Secondary School, Madurai",
+  "St. Mary's Higher Secondary School, Madurai",
+  "Noyes Higher Secondary School, Madurai",
+  "Vikaasa World School, Madurai",
+  "Campian Higher Secondary School, Trichy",
+  "St. Joseph's College Higher Secondary School, Trichy",
+  "SRV Higher Secondary School, Samayapuram, Trichy",
+  "Vests Matriculation Higher Secondary School, Trichy",
+  "Holy Cross Higher Secondary School, Trichy",
+  "Little Flower Higher Secondary School, Salem",
+  "Holy Angels Higher Secondary School, Salem",
+  "Cluny Higher Secondary School, Salem",
+  "Montfort Higher Secondary School, Yercaud",
+  "Nandha Matriculation Higher Secondary School, Erode",
+  "Kongu Vellalar Matriculation Higher Secondary School, Erode",
+  "Erode Hindu Kalvi Nilayam Higher Secondary School, Erode",
+  "Green Valley Matriculation Higher Secondary School, Erode",
+  "Vellalar Higher Secondary School for Girls, Erode",
+  "St. Xavier's Higher Secondary School, Palayamkottai, Tirunelveli",
+  "Schaffter Higher Secondary School, Tirunelveli",
+  "St. John's Higher Secondary School, Palayamkottai",
+  "Rose Mary Matriculation Higher Secondary School, Tirunelveli",
+  "Desiya Educational Society Higher Secondary School, Namakkal",
+  "Green Park Higher Secondary School, Namakkal",
+  "Selvam Higher Secondary School, Namakkal",
+  "Spectrum Higher Secondary School, Namakkal",
+  "Voorhees Higher Secondary School, Vellore",
+  "Idhaya Matriculation Higher Secondary School, Vellore",
+  "St. Antony's Higher Secondary School, Tanjore",
+  "Maxwell Matriculation Higher Secondary School, Tanjore",
+  "St. James Higher Secondary School, Palayamkottai",
+  "Other"
+];
+
 export default function Signup() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const roleParam = (searchParams.get("role") || "student").toLowerCase();
 
+  const [institutionType, setInstitutionType] = useState("college"); // "college" or "school"
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -120,7 +176,15 @@ export default function Signup() {
     }
 
     const finalCollege = college === "Other" ? (customCollege.trim() || "Other") : (college || collegeSearch.trim());
-    const finalDept = department === "Other" ? (customDepartment.trim() || "Other") : department;
+    
+    let finalDept = department;
+    if (institutionType === "school") {
+      finalDept = department.startsWith("Class ") ? department : "Class 10";
+    } else {
+      finalDept = department === "Other" ? (customDepartment.trim() || "Other") : department;
+    }
+    
+    const finalYear = institutionType === "school" ? "" : year;
 
     try {
       setLoading(true);
@@ -136,7 +200,7 @@ export default function Signup() {
             role,
             college: finalCollege,
             department: finalDept,
-            year,
+            year: finalYear,
           },
         }
       );
@@ -337,11 +401,70 @@ export default function Signup() {
           </button>
         </div>
 
-        {/* COLLEGE — Searchable Combobox */}
+        {/* INSTITUTION TYPE SELECTION (College or School) */}
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "6px" }}>
+            Institution Type
+          </label>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setInstitutionType("college");
+                setCollege("");
+                setCollegeSearch("");
+                setDepartment("CSE");
+                setYear("3rd Year");
+              }}
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: "10px",
+                border: institutionType === "college" ? "1px solid #38bdf8" : "1px solid #404040",
+                background: institutionType === "college" ? "#1e293b" : "#262626",
+                color: institutionType === "college" ? "#38bdf8" : "#9ca3af",
+                fontWeight: "600",
+                cursor: "pointer",
+                fontSize: "14px"
+              }}
+            >
+              🎓 College
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setInstitutionType("school");
+                setCollege("");
+                setCollegeSearch("");
+                setDepartment("Class 10");
+                setYear("");
+              }}
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: "10px",
+                border: institutionType === "school" ? "1px solid #38bdf8" : "1px solid #404040",
+                background: institutionType === "school" ? "#1e293b" : "#262626",
+                color: institutionType === "school" ? "#38bdf8" : "#9ca3af",
+                fontWeight: "600",
+                cursor: "pointer",
+                fontSize: "14px"
+              }}
+            >
+              🏫 School
+            </button>
+          </div>
+        </div>
+
+        {/* COLLEGE / SCHOOL — Searchable Combobox */}
         <div style={{ marginBottom: "12px", position: "relative" }} ref={collegeRef}>
+          <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
+            {institutionType === "school" ? "Search School" : "Search College"}
+          </label>
           <input
             type="text"
-            placeholder="Search College..."
+            placeholder={institutionType === "school" ? "Search School..." : "Search College..."}
             value={college || collegeSearch}
             onFocus={() => {
               setCollegeSearch(college || "");
@@ -379,7 +502,7 @@ export default function Signup() {
               zIndex: 999,
               marginTop: "4px"
             }}>
-              {TN_COLLEGES
+              {(institutionType === "school" ? TN_SCHOOLS : TN_COLLEGES)
                 .filter(c => c.toLowerCase().includes((collegeSearch || "").toLowerCase()))
                 .map((c, i) => (
                   <div
@@ -403,7 +526,7 @@ export default function Signup() {
                   </div>
                 ))
               }
-              {TN_COLLEGES.filter(c => c.toLowerCase().includes((collegeSearch || "").toLowerCase())).length === 0 && (
+              {(institutionType === "school" ? TN_SCHOOLS : TN_COLLEGES).filter(c => c.toLowerCase().includes((collegeSearch || "").toLowerCase())).length === 0 && (
                 <div
                   onMouseDown={() => {
                     setCollege("Other");
@@ -417,7 +540,7 @@ export default function Signup() {
                     fontSize: "13px"
                   }}
                 >
-                  + Add Custom College ("Other")
+                  + Add Custom {institutionType === "school" ? "School" : "College"} ("Other")
                 </div>
               )}
             </div>
@@ -425,7 +548,7 @@ export default function Signup() {
           {college === "Other" && (
             <input
               type="text"
-              placeholder="Enter custom college name..."
+              placeholder={`Enter custom ${institutionType === "school" ? "school" : "college"} name...`}
               value={customCollege}
               onChange={(e) => setCustomCollege(e.target.value)}
               style={{
@@ -444,79 +567,105 @@ export default function Signup() {
           )}
         </div>
 
-        {/* DEPARTMENT — Students only */}
+        {/* DEPARTMENT / CLASSES — Students only */}
         {role === "student" && (
           <div style={{ marginBottom: "12px" }}>
             <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
-              Department
+              {institutionType === "school" ? "Classes" : "Department"}
             </label>
-            <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "12px 14px",
-                background: "#262626",
-                color: "white",
-                border: "1px solid #404040",
-                borderRadius: "10px",
-                outline: "none",
-                boxSizing: "border-box"
-              }}
-            >
-              <option value="CSE">CSE (Computer Science & Engineering)</option>
-              <option value="IT">IT (Information Technology)</option>
-              <option value="ECE">ECE (Electronics & Communication Engineering)</option>
-              <option value="EEE">EEE (Electrical & Electronics Engineering)</option>
-              <option value="MECH">MECH (Mechanical Engineering)</option>
-              <option value="CIVIL">CIVIL (Civil Engineering)</option>
-              <option value="AIDS">AIDS (Artificial Intelligence & Data Science)</option>
-              <option value="AIML">AIML (Artificial Intelligence & Machine Learning)</option>
-              <option value="CHEM">Chemical Engineering</option>
-              <option value="BIO">Bio-Technology</option>
-              <option value="AERO">Aerospace Engineering</option>
-              <option value="AUTO">Automobile Engineering</option>
-              <option value="MARINE">Marine Engineering</option>
-              <option value="PROD">Production Engineering</option>
-              <option value="TEXTILE">Textile Technology</option>
-              <option value="ENV">Environmental Engineering</option>
-              <option value="FOOD">Food Technology</option>
-              <option value="INSTRU">Instrumentation Engineering</option>
-              <option value="INDUSTRIAL">Industrial Engineering</option>
-              <option value="PETRO">Petroleum Engineering</option>
-              <option value="MINING">Mining Engineering</option>
-              <option value="METALLURGY">Metallurgical Engineering</option>
-              <option value="ROBOTICS">Robotics & Automation</option>
-              <option value="CSBS">CSBS (Computer Science & Business Systems)</option>
-              <option value="MCT">MCT (Mechatronics)</option>
-              <option value="Other">Other</option>
-            </select>
-            {department === "Other" && (
-              <input
-                type="text"
-                placeholder="Enter custom department..."
-                value={customDepartment}
-                onChange={(e) => setCustomDepartment(e.target.value)}
+            {institutionType === "school" ? (
+              <select
+                value={department.startsWith("Class ") ? department : "Class 10"}
+                onChange={(e) => setDepartment(e.target.value)}
                 style={{
                   width: "100%",
                   padding: "12px 14px",
-                  marginTop: "8px",
                   background: "#262626",
                   color: "white",
                   border: "1px solid #404040",
                   borderRadius: "10px",
                   outline: "none",
-                  boxSizing: "border-box",
-                  fontSize: "14px"
+                  boxSizing: "border-box"
                 }}
-              />
+              >
+                <option value="Class 6">Class 6</option>
+                <option value="Class 7">Class 7</option>
+                <option value="Class 8">Class 8</option>
+                <option value="Class 9">Class 9</option>
+                <option value="Class 10">Class 10</option>
+                <option value="Class 11">Class 11</option>
+                <option value="Class 12">Class 12</option>
+              </select>
+            ) : (
+              <>
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    background: "#262626",
+                    color: "white",
+                    border: "1px solid #404040",
+                    borderRadius: "10px",
+                    outline: "none",
+                    boxSizing: "border-box"
+                  }}
+                >
+                  <option value="CSE">CSE (Computer Science & Engineering)</option>
+                  <option value="IT">IT (Information Technology)</option>
+                  <option value="ECE">ECE (Electronics & Communication Engineering)</option>
+                  <option value="EEE">EEE (Electrical & Electronics Engineering)</option>
+                  <option value="MECH">MECH (Mechanical Engineering)</option>
+                  <option value="CIVIL">CIVIL (Civil Engineering)</option>
+                  <option value="AIDS">AIDS (Artificial Intelligence & Data Science)</option>
+                  <option value="AIML">AIML (Artificial Intelligence & Machine Learning)</option>
+                  <option value="CHEM">Chemical Engineering</option>
+                  <option value="BIO">Bio-Technology</option>
+                  <option value="AERO">Aerospace Engineering</option>
+                  <option value="AUTO">Automobile Engineering</option>
+                  <option value="MARINE">Marine Engineering</option>
+                  <option value="PROD">Production Engineering</option>
+                  <option value="TEXTILE">Textile Technology</option>
+                  <option value="ENV">Environmental Engineering</option>
+                  <option value="FOOD">Food Technology</option>
+                  <option value="INSTRU">Instrumentation Engineering</option>
+                  <option value="INDUSTRIAL">Industrial Engineering</option>
+                  <option value="PETRO">Petroleum Engineering</option>
+                  <option value="MINING">Mining Engineering</option>
+                  <option value="METALLURGY">Metallurgical Engineering</option>
+                  <option value="ROBOTICS">Robotics & Automation</option>
+                  <option value="CSBS">CSBS (Computer Science & Business Systems)</option>
+                  <option value="MCT">MCT (Mechatronics)</option>
+                  <option value="Other">Other</option>
+                </select>
+                {department === "Other" && (
+                  <input
+                    type="text"
+                    placeholder="Enter custom department..."
+                    value={customDepartment}
+                    onChange={(e) => setCustomDepartment(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "12px 14px",
+                      marginTop: "8px",
+                      background: "#262626",
+                      color: "white",
+                      border: "1px solid #404040",
+                      borderRadius: "10px",
+                      outline: "none",
+                      boxSizing: "border-box",
+                      fontSize: "14px"
+                    }}
+                  />
+                )}
+              </>
             )}
           </div>
         )}
 
-
-        {/* YEAR — Students only */}
-        {role === "student" && (
+        {/* YEAR — Students only & College only */}
+        {role === "student" && institutionType !== "school" && (
           <div style={{ marginBottom: "16px" }}>
             <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
               Year

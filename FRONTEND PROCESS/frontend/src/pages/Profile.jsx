@@ -135,7 +135,7 @@ export default function Profile() {
             marginBottom: "15px",
           }}
         >
-          🏫 <b>College:</b> {user.college || "—"}
+          🏫 <b>{(user.college || "").toLowerCase().includes("school") || (user.department || "").startsWith("Class ") ? "School" : "College"}:</b> {user.college || "—"}
         </div>
 
         {(user.role || "").toLowerCase() === "student" && user.department && (
@@ -147,11 +147,11 @@ export default function Profile() {
               marginBottom: "15px",
             }}
           >
-            📚 <b>Department:</b> {user.department}
+            📚 <b>{(user.department || "").startsWith("Class ") ? "Class:" : "Department:"}</b> {user.department}
           </div>
         )}
 
-        {(user.role || "").toLowerCase() === "student" && user.year && (
+        {(user.role || "").toLowerCase() === "student" && user.year && !(user.department || "").startsWith("Class ") && !(user.college || "").toLowerCase().includes("school") && (
           <div
             style={{
               background: "#3a3a3a",

@@ -6,6 +6,11 @@ export default function Library() {
   const role = (localStorage.getItem("role") || "").toLowerCase().trim();
   const userDept = localStorage.getItem("department") || "CSE";
   const userYr = localStorage.getItem("year") || "3rd Year";
+  const userCollege = localStorage.getItem("college") || "";
+  const userEmail = localStorage.getItem("email") || "";
+
+  const isSchool = (userDept && userDept.startsWith("Class ")) ||
+                   (userCollege && userCollege.toLowerCase().includes("school"));
 
   const isStudent = role === "student";
   const isStaffOrAdmin = role === "admin" || role === "staff";
@@ -14,12 +19,9 @@ export default function Library() {
   const [pdfs, setPdfs] = useState([]);
   const [pdfDetails, setPdfDetails] = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [uploadDept, setUploadDept] = useState("CSE");
+  const [uploadDept, setUploadDept] = useState(isSchool ? "Class 10" : "CSE");
   const [uploadYear, setUploadYear] = useState("3rd Year");
   const [customUploadDept, setCustomUploadDept] = useState("");
-
-  const userCollege = localStorage.getItem("college") || "";
-  const userEmail = localStorage.getItem("email") || "";
 
   useEffect(() => {
     fetchPDFs();
@@ -33,7 +35,9 @@ export default function Library() {
       }
       if (isStudent) {
         params.department = userDept;
-        params.year = userYr;
+        if (!isSchool) {
+          params.year = userYr;
+        }
         params.role = "student";
       }
 
@@ -58,12 +62,13 @@ export default function Library() {
     }
 
     const finalDept = uploadDept === "Other" ? (customUploadDept.trim() || "Other") : uploadDept;
+    const finalYear = isSchool ? "ALL" : uploadYear;
 
     const formData = new FormData();
     formData.append("pdf", file);
     formData.append("college", userCollege || "ALL");
     formData.append("department", finalDept);
-    formData.append("year", uploadYear);
+    formData.append("year", finalYear);
     formData.append("uploaded_by", userEmail);
 
     try {
@@ -78,7 +83,7 @@ export default function Library() {
         await fetchPDFs();
         setFile(null);
         setCustomUploadDept("");
-        alert(`PDF Uploaded & processed for ${finalDept} - ${uploadYear}!`);
+        alert(`PDF Uploaded & processed for ${finalDept}${!isSchool ? ` - ${finalYear}` : ""}!`);
       }
     } catch (error) {
       console.error("PDF UPLOAD ERROR:", error);
@@ -119,7 +124,7 @@ export default function Library() {
           </h1>
           {isStudent && (
             <p style={{ margin: 0, color: "#9ca3af", fontSize: "14px" }}>
-              Showing study materials for <strong style={{ color: "#38bdf8" }}>{userDept} — {userYr}</strong>
+              Showing study materials for <strong style={{ color: "#38bdf8" }}>{userDept}{!isSchool && userYr ? ` — ${userYr}` : ""}</strong>
             </p>
           )}
         </div>
@@ -143,47 +148,69 @@ export default function Library() {
           <div style={{ display: "flex", gap: "15px", flexWrap: "wrap", alignItems: "center", marginBottom: "15px" }}>
             <div>
               <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
-                Select Department
+                {isSchool ? "Select Class" : "Select Department"}
               </label>
-              <select
-                value={uploadDept}
-                onChange={(e) => setUploadDept(e.target.value)}
-                style={{
-                  padding: "10px 14px",
-                  background: "#171717",
-                  color: "white",
-                  border: "1px solid #404040",
-                  borderRadius: "8px"
-                }}
-              >
-                <option value="CSE">CSE (Computer Science & Engineering)</option>
-                <option value="IT">IT (Information Technology)</option>
-                <option value="ECE">ECE (Electronics & Communication Engineering)</option>
-                <option value="EEE">EEE (Electrical & Electronics Engineering)</option>
-                <option value="MECH">MECH (Mechanical Engineering)</option>
-                <option value="CIVIL">CIVIL (Civil Engineering)</option>
-                <option value="AIDS">AIDS (Artificial Intelligence & Data Science)</option>
-                <option value="AIML">AIML (Artificial Intelligence & Machine Learning)</option>
-                <option value="Chemical Engineering">Chemical Engineering</option>
-                <option value="Bio-Technology">Bio-Technology</option>
-                <option value="Aerospace Engineering">Aerospace Engineering</option>
-                <option value="Automobile Engineering">Automobile Engineering</option>
-                <option value="Marine Engineering">Marine Engineering</option>
-                <option value="Production Engineering">Production Engineering</option>
-                <option value="Textile Technology">Textile Technology</option>
-                <option value="Environmental Engineering">Environmental Engineering</option>
-                <option value="Food Technology">Food Technology</option>
-                <option value="Instrumentation Engineering">Instrumentation Engineering</option>
-                <option value="Industrial Engineering">Industrial Engineering</option>
-                <option value="Petroleum Engineering">Petroleum Engineering</option>
-                <option value="Mining Engineering">Mining Engineering</option>
-                <option value="Metallurgical Engineering">Metallurgical Engineering</option>
-                <option value="Robotics & Automation">Robotics & Automation</option>
-                <option value="CSBS">CSBS (Computer Science & Business Systems)</option>
-                <option value="MCT">MCT (Mechatronics)</option>
-                <option value="Other">Other</option>
-              </select>
-              {uploadDept === "Other" && (
+              {isSchool ? (
+                <select
+                  value={uploadDept.startsWith("Class ") ? uploadDept : "Class 10"}
+                  onChange={(e) => setUploadDept(e.target.value)}
+                  style={{
+                    padding: "10px 14px",
+                    background: "#171717",
+                    color: "white",
+                    border: "1px solid #404040",
+                    borderRadius: "8px"
+                  }}
+                >
+                  <option value="Class 6">Class 6</option>
+                  <option value="Class 7">Class 7</option>
+                  <option value="Class 8">Class 8</option>
+                  <option value="Class 9">Class 9</option>
+                  <option value="Class 10">Class 10</option>
+                  <option value="Class 11">Class 11</option>
+                  <option value="Class 12">Class 12</option>
+                </select>
+              ) : (
+                <select
+                  value={uploadDept}
+                  onChange={(e) => setUploadDept(e.target.value)}
+                  style={{
+                    padding: "10px 14px",
+                    background: "#171717",
+                    color: "white",
+                    border: "1px solid #404040",
+                    borderRadius: "8px"
+                  }}
+                >
+                  <option value="CSE">CSE (Computer Science & Engineering)</option>
+                  <option value="IT">IT (Information Technology)</option>
+                  <option value="ECE">ECE (Electronics & Communication Engineering)</option>
+                  <option value="EEE">EEE (Electrical & Electronics Engineering)</option>
+                  <option value="MECH">MECH (Mechanical Engineering)</option>
+                  <option value="CIVIL">CIVIL (Civil Engineering)</option>
+                  <option value="AIDS">AIDS (Artificial Intelligence & Data Science)</option>
+                  <option value="AIML">AIML (Artificial Intelligence & Machine Learning)</option>
+                  <option value="Chemical Engineering">Chemical Engineering</option>
+                  <option value="Bio-Technology">Bio-Technology</option>
+                  <option value="Aerospace Engineering">Aerospace Engineering</option>
+                  <option value="Automobile Engineering">Automobile Engineering</option>
+                  <option value="Marine Engineering">Marine Engineering</option>
+                  <option value="Production Engineering">Production Engineering</option>
+                  <option value="Textile Technology">Textile Technology</option>
+                  <option value="Environmental Engineering">Environmental Engineering</option>
+                  <option value="Food Technology">Food Technology</option>
+                  <option value="Instrumentation Engineering">Instrumentation Engineering</option>
+                  <option value="Industrial Engineering">Industrial Engineering</option>
+                  <option value="Petroleum Engineering">Petroleum Engineering</option>
+                  <option value="Mining Engineering">Mining Engineering</option>
+                  <option value="Metallurgical Engineering">Metallurgical Engineering</option>
+                  <option value="Robotics & Automation">Robotics & Automation</option>
+                  <option value="CSBS">CSBS (Computer Science & Business Systems)</option>
+                  <option value="MCT">MCT (Mechatronics)</option>
+                  <option value="Other">Other</option>
+                </select>
+              )}
+              {uploadDept === "Other" && !isSchool && (
                 <input
                   type="text"
                   placeholder="Enter custom department..."
@@ -204,28 +231,29 @@ export default function Library() {
               )}
             </div>
 
-
-            <div>
-              <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
-                Select Year
-              </label>
-              <select
-                value={uploadYear}
-                onChange={(e) => setUploadYear(e.target.value)}
-                style={{
-                  padding: "10px 14px",
-                  background: "#171717",
-                  color: "white",
-                  border: "1px solid #404040",
-                  borderRadius: "8px"
-                }}
-              >
-                <option value="1st Year">1st Year</option>
-                <option value="2nd Year">2nd Year</option>
-                <option value="3rd Year">3rd Year</option>
-                <option value="4th Year">4th Year</option>
-              </select>
-            </div>
+            {!isSchool && (
+              <div>
+                <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
+                  Select Year
+                </label>
+                <select
+                  value={uploadYear}
+                  onChange={(e) => setUploadYear(e.target.value)}
+                  style={{
+                    padding: "10px 14px",
+                    background: "#171717",
+                    color: "white",
+                    border: "1px solid #404040",
+                    borderRadius: "8px"
+                  }}
+                >
+                  <option value="1st Year">1st Year</option>
+                  <option value="2nd Year">2nd Year</option>
+                  <option value="3rd Year">3rd Year</option>
+                  <option value="4th Year">4th Year</option>
+                </select>
+              </div>
+            )}
 
             <div style={{ flex: 1, minWidth: "220px" }}>
               <label style={{ fontSize: "12px", color: "#9ca3af", display: "block", marginBottom: "4px" }}>
@@ -307,18 +335,20 @@ export default function Library() {
                     >
                       {item.department || "ALL"}
                     </span>
-                    <span
-                      style={{
-                        background: "#065f46",
-                        color: "#6ee7b7",
-                        padding: "2px 8px",
-                        borderRadius: "6px",
-                        fontSize: "11px",
-                        fontWeight: "500"
-                      }}
-                    >
-                      {item.year || "ALL"}
-                    </span>
+                    {!isSchool && item.year && item.year !== "ALL" && (
+                      <span
+                        style={{
+                          background: "#065f46",
+                          color: "#6ee7b7",
+                          padding: "2px 8px",
+                          borderRadius: "6px",
+                          fontSize: "11px",
+                          fontWeight: "500"
+                        }}
+                      >
+                        {item.year}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
