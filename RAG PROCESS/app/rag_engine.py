@@ -388,19 +388,33 @@ class RAGEngine:
                             if not _is_doc_allowed(doc):
                                 continue
 
-                            # Score threshold: L2 distance in Chroma (>1.25 = weak / low similarity)
+                            # Score threshold & strict keyword relevance check
                             c_low = doc.page_content.lower()
-
-                            # Keyword check if key terms exist
-                            has_keyword_match = False
+                            matched_terms = [t for t in query_key_terms if t in c_low] if query_key_terms else []
+                            
+                            # Dynamic distance thresholding based on query term overlap
                             if query_key_terms:
-                                has_keyword_match = any(t in c_low for t in query_key_terms)
-
-                            # Rule 1: If chunk contains key topic terms from the question, ALWAYS KEEP IT!
-                            # Rule 2: If chunk does NOT contain key terms, only keep if vector similarity is very close (score <= 1.20)
-                            if not has_keyword_match and score > 1.20:
-                                print(f"[RAG] Skipping out-of-domain chunk (score={score:.3f}, no keyword match): '{doc.page_content[:50]}...'")
-                                continue
+                                if len(query_key_terms) >= 2:
+                                    if len(matched_terms) == 0 and score > 1.05:
+                                        print(f"[RAG] Skipping out-of-domain chunk (score={score:.3f}, 0/{len(query_key_terms)} key terms): '{doc.page_content[:50]}...'")
+                                        continue
+                                    elif len(matched_terms) == 1 and score > 1.12:
+                                        print(f"[RAG] Skipping partial term chunk (score={score:.3f}, 1/{len(query_key_terms)} key terms matched '{matched_terms}'): '{doc.page_content[:50]}...'")
+                                        continue
+                                    elif score > 1.30:
+                                        print(f"[RAG] Skipping weak match chunk (score={score:.3f}): '{doc.page_content[:50]}...'")
+                                        continue
+                                else:
+                                    if len(matched_terms) == 0 and score > 1.05:
+                                        print(f"[RAG] Skipping out-of-domain chunk (score={score:.3f}, 0/1 key term): '{doc.page_content[:50]}...'")
+                                        continue
+                                    elif score > 1.30:
+                                        print(f"[RAG] Skipping weak match chunk (score={score:.3f}): '{doc.page_content[:50]}...'")
+                                        continue
+                            else:
+                                if score > 1.20:
+                                    print(f"[RAG] Skipping out-of-domain chunk (score={score:.3f}, no key terms): '{doc.page_content[:50]}...'")
+                                    continue
 
                             seen_contents.add(doc.page_content)
                             results.append(doc)
@@ -420,8 +434,16 @@ class RAGEngine:
                         if not _is_doc_allowed(chunk):
                             continue
                         c_low = chunk.page_content.lower()
-                        # Require at least one key term match
-                        if any(term in c_low for term in query_key_terms):
+                        
+                        # Require strong term overlap for fallback lookup
+                        if len(query_key_terms) >= 2:
+                            req_count = max(2, int(len(query_key_terms) * 0.7))
+                            matched = [t for t in query_key_terms if t in c_low]
+                            has_direct_match = len(matched) >= req_count
+                        else:
+                            has_direct_match = any(t in c_low for t in query_key_terms)
+
+                        if has_direct_match:
                             if chunk.page_content not in seen_contents:
                                 seen_contents.add(chunk.page_content)
                                 results.append(chunk)
@@ -430,12 +452,25 @@ class RAGEngine:
                 except Exception as fb_err:
                     print(f"⚠️ Direct PDF fallback note: {fb_err}")
 
-
             if not results:
                 print(f"[RAG] No relevant document chunks found for: '{query[:30]}'")
                 return "", [], []
 
             valid_docs = results[:k]
+
+            # Grounding sanity check: Ensure at least one retrieved chunk contains the main topic query terms
+            if query_key_terms and len(query_key_terms) >= 2:
+                has_solid_topic_match = False
+                for doc in valid_docs:
+                    c_low = doc.page_content.lower()
+                    matched = [t for t in query_key_terms if t in c_low]
+                    if len(matched) >= min(2, len(query_key_terms)):
+                        has_solid_topic_match = True
+                        break
+                if not has_solid_topic_match:
+                    print(f"🚫 [RAG GROUNDING REJECTED] None of the retrieved chunks match the full topic '{query_key_terms}'")
+                    return "", [], []
+
             sources_metadata = []
             for doc in valid_docs:
                 doc_name = doc.metadata.get("source", "study_material.pdf")
@@ -674,7 +709,7 @@ Answer:"""
         cleaned = re.sub(r'(\n*\s*###?\s*Example:?\s*)+$', '', cleaned, flags=re.IGNORECASE).strip()
 
         # Check if there is already a non-empty ### Example block with content (> 15 chars)
-        example_match = re.search(r'###?\s*Example\s*\n+([\s\S]+)', cleaned, flags=re.IGNORECASE)
+        example_match = re.search(r'###?\s*Example:?\s*\n+([\s\S]+)', cleaned, flags=re.IGNORECASE)
         if example_match:
             example_body = example_match.group(1).strip()
             clean_body = re.sub(r'^(example:?\s*)+', '', example_body, flags=re.IGNORECASE).strip()
@@ -683,26 +718,26 @@ Answer:"""
                 base_ans = cleaned[:header_pos].strip()
                 return f"{base_ans}\n\n### Example\n{clean_body}"
 
-        # If ### Example was empty or missing, strip any broken header remnants from base_ans
-        base_ans = re.sub(r'\n*\s*###?\s*Example:?\s*.*$', '', cleaned, flags=re.IGNORECASE).strip()
+        # If ### Example was empty or missing, strip any broken header remnants and trailing text from base_ans
+        base_ans = re.sub(r'\n*\s*###?\s*Example:?[\s\S]*$', '', cleaned, flags=re.IGNORECASE).strip()
 
-        # Try to find an example snippet from the context text
+        # Try to find an example snippet from the context text, excluding license/legal text
         extracted_example = None
         if context_text:
             lines = [l.strip() for l in context_text.split('\n') if l.strip()]
             for line in lines:
                 l_low = line.lower()
                 if any(w in l_low for w in ["example", "for instance", "such as", "e.g.", "192.168", "consider"]):
-                    if len(line) > 20 and not line.startswith("#"):
+                    if len(line) > 20 and not line.startswith("#") and not any(bad in l_low for bad in ["license", "copyright", "permission is granted", "opaque copy", "transparent copy", "gnu free"]):
                         extracted_example = line
                         break
 
         if extracted_example:
             return f"{base_ans}\n\n### Example\n{extracted_example}"
         
-        # Fallback to extracting a descriptive context line for illustration
+        # Fallback to extracting a descriptive context line for illustration (excluding license text)
         if context_text:
-            lines = [l.strip() for l in context_text.split('\n') if len(l.strip()) > 30 and not l.strip().startswith("#")]
+            lines = [l.strip() for l in context_text.split('\n') if len(l.strip()) > 30 and not l.strip().startswith("#") and not any(bad in l.lower() for bad in ["license", "copyright", "permission is granted", "opaque copy", "transparent copy", "gnu free"])]
             if lines:
                 return f"{base_ans}\n\n### Example\nFor instance: {lines[0]}"
 
