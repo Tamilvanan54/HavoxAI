@@ -395,11 +395,11 @@ export default function Login() {
           <>
             <div style={{ marginBottom: "14px" }}>
               <label style={{ fontSize: "12px", color: "#94a3af", display: "block", marginBottom: "4px" }}>
-                Super Admin Username / Email
+                Username
               </label>
               <input
                 type="text"
-                placeholder="SuperAdmin"
+                placeholder="Username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{

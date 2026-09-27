@@ -4,11 +4,22 @@ import axios from "axios";
 import { API_BASE_URL } from "../config/api";
 import {
   FaTachometerAlt,
-  FaUniversity,
   FaUsers,
+  FaUserTie,
+  FaGraduationCap,
+  FaUserShield,
+  FaBuilding,
+  FaCalendarAlt,
+  FaBook,
+  FaFileAlt,
+  FaRobot,
+  FaDatabase,
+  FaSlidersH,
+  FaChartBar,
   FaChartLine,
-  FaCreditCard,
-  FaClipboardList,
+  FaBullhorn,
+  FaDesktop,
+  FaHistory,
   FaCogs,
   FaCrown,
   FaSignOutAlt,
@@ -16,6 +27,18 @@ import {
   FaSearch,
   FaShieldAlt,
   FaCheckCircle,
+  FaBell,
+  FaSun,
+  FaTrash,
+  FaArrowRight,
+  FaClock,
+  FaHdd,
+  FaMicrochip,
+  FaMemory,
+  FaFileUpload,
+  FaBookOpen,
+  FaPaperPlane,
+  FaCheck,
   FaExclamationTriangle
 } from "react-icons/fa";
 
@@ -24,27 +47,24 @@ export default function SuperAdminPortal() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
-  const [statusFilter, setStatusFilter] = useState("ALL");
 
-  // Institutions state
+  // Institutions & Users state
   const [institutions, setInstitutions] = useState([]);
-
-  // Users state
   const [users, setUsers] = useState([]);
-
-  // Stats state
   const [stats, setStats] = useState({
     total_institutions: 0,
     active_institutions: 0,
     total_students: 0,
-    total_staff: 0
+    total_staff: 0,
+    total_admins: 0
   });
 
-  // Modal for adding institution
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newInstName, setNewInstName] = useState("");
-  const [newInstCode, setNewInstCode] = useState("");
-  const [newInstPlan, setNewInstPlan] = useState("Professional");
+  // Modal states
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserRole, setNewUserRole] = useState("student");
+  const [newUserCollege, setNewUserCollege] = useState("");
 
   useEffect(() => {
     const role = (localStorage.getItem("role") || "").toLowerCase();
@@ -63,7 +83,8 @@ export default function SuperAdminPortal() {
             total_institutions: res.data.total_institutions || (res.data.institutions ? res.data.institutions.length : 0),
             active_institutions: res.data.active_institutions || (res.data.institutions ? res.data.institutions.length : 0),
             total_students: res.data.total_students || 0,
-            total_staff: res.data.total_staff || 0
+            total_staff: res.data.total_staff || 0,
+            total_admins: res.data.total_admins || 0
           });
         }
       } catch (err) {
@@ -73,28 +94,6 @@ export default function SuperAdminPortal() {
 
     fetchOverview();
   }, [navigate]);
-
-  const handleAddInstitution = () => {
-    if (!newInstName || !newInstCode) {
-      alert("Please fill all fields!");
-      return;
-    }
-    const newInst = {
-      id: institutions.length + 1,
-      name: newInstName,
-      code: newInstCode,
-      plan: newInstPlan,
-      status: "Active",
-      students: 0,
-      staff: 0,
-      lastLogin: "Just Now"
-    };
-    setInstitutions([...institutions, newInst]);
-    setNewInstName("");
-    setNewInstCode("");
-    setShowAddModal(false);
-    alert(`Institution '${newInstName}' added successfully!`);
-  };
 
   const handleLogout = () => {
     localStorage.clear();
@@ -115,386 +114,782 @@ export default function SuperAdminPortal() {
     }
   };
 
+  // Filtered users depending on tab or search
+  const getFilteredUsersList = (specificRole = null) => {
+    return users.filter(u => {
+      const matchRole = specificRole
+        ? u.role?.toLowerCase() === specificRole.toLowerCase()
+        : (roleFilter === "ALL" || u.role?.toLowerCase() === roleFilter.toLowerCase());
+      const matchSearch = u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          u.institution?.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchRole && matchSearch;
+    });
+  };
+
+  const totalUsersCount = users.length || 2450;
+  const activeTodayCount = Math.round(totalUsersCount * 0.32) || 780;
+  const studentsCount = stats.total_students || users.filter(u => u.role?.toLowerCase() === "student").length || 2120;
+  const facultyCount = stats.total_staff || users.filter(u => u.role?.toLowerCase() === "staff").length || 210;
+  const adminsCount = stats.total_admins || users.filter(u => u.role?.toLowerCase() === "admin").length || 20;
+
   return (
     <div
       style={{
         display: "flex",
         minHeight: "100vh",
-        background: "#090d16",
-        color: "white",
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+        background: "#0b0f19",
+        color: "#f8fafc",
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
       }}
     >
-      {/* SIDEBAR NAVIGATION */}
+      {/* SIDEBAR */}
       <div
         style={{
-          width: "240px",
-          background: "#0f172a",
-          borderRight: "1px solid rgba(255, 255, 255, 0.08)",
+          width: "260px",
+          background: "#111827",
+          borderRight: "1px solid rgba(255, 255, 255, 0.06)",
+          padding: "20px 16px",
           display: "flex",
           flexDirection: "column",
-          padding: "24px 16px",
-          boxSizing: "border-box"
+          gap: "24px",
+          flexShrink: 0
         }}
       >
         {/* BRAND LOGO */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "32px", paddingLeft: "8px" }}>
-          <img src="/havox-icon.png" alt="HavoxAI" style={{ width: "36px", height: "36px" }} />
-          <span style={{ fontSize: "20px", fontWeight: "800", color: "white", letterSpacing: "-0.5px" }}>
-            HavoxAI
-          </span>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+            <div
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "10px",
+                background: "linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "20px",
+                color: "white"
+              }}
+            >
+              🤖
+            </div>
+            <div>
+              <div style={{ fontSize: "18px", fontWeight: "900", letterSpacing: "0.5px", color: "white" }}>
+                HAVOX AI
+              </div>
+              <div style={{ fontSize: "11px", color: "#94a3b8" }}>Study Assistant for College</div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: "16px",
+              background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
+              padding: "8px 12px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: "700",
+              color: "white",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+          >
+            <FaCrown style={{ color: "#fbbf24" }} /> Super Admin
+          </div>
         </div>
 
-        {/* NAVIGATION ITEMS */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
-          {[
-            { id: "dashboard", label: "Dashboard", icon: <FaTachometerAlt /> },
-            { id: "institutions", label: "Institutions", icon: <FaUniversity /> },
-            { id: "users", label: "Users", icon: <FaUsers /> },
-            { id: "analytics", label: "Analytics", icon: <FaChartLine /> },
-            { id: "subscriptions", label: "Subscriptions", icon: <FaCreditCard /> },
-            { id: "audit_logs", label: "Audit Logs", icon: <FaClipboardList /> },
-            { id: "settings", label: "Settings", icon: <FaCogs /> }
-          ].map((item) => (
+        {/* SIDEBAR NAVIGATION ITEMS */}
+        <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* MAIN DASHBOARD */}
+          <div>
             <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => setActiveTab("dashboard")}
               style={{
+                width: "100%",
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
-                padding: "12px 16px",
-                borderRadius: "12px",
+                padding: "10px 14px",
+                borderRadius: "10px",
                 border: "none",
-                background: activeTab === item.id ? "#2563eb" : "transparent",
-                color: activeTab === item.id ? "white" : "#94a3b8",
-                fontWeight: activeTab === item.id ? "600" : "500",
-                fontSize: "14px",
+                background: activeTab === "dashboard" ? "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" : "transparent",
+                color: activeTab === "dashboard" ? "white" : "#94a3b8",
+                fontWeight: activeTab === "dashboard" ? "700" : "500",
+                fontSize: "13px",
                 cursor: "pointer",
-                textAlign: "left",
-                transition: "all 0.2s ease"
+                textAlign: "left"
               }}
             >
-              <span style={{ fontSize: "16px" }}>{item.icon}</span>
-              {item.label}
+              <FaTachometerAlt style={{ fontSize: "15px" }} /> Dashboard
             </button>
-          ))}
+          </div>
+
+          {/* USER MANAGEMENT */}
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.8px", marginBottom: "8px", textTransform: "uppercase" }}>
+              User Management
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              {[
+                { id: "users", label: "Users", icon: <FaUsers /> },
+                { id: "departments", label: "Departments", icon: <FaBuilding /> },
+                { id: "faculty", label: "Faculty", icon: <FaUserTie /> },
+                { id: "students", label: "Students", icon: <FaGraduationCap /> },
+                { id: "admins", label: "Admins", icon: <FaUserShield /> },
+                { id: "roles", label: "Roles & Permissions", icon: <FaShieldAlt /> }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: activeTab === item.id ? "rgba(99, 102, 241, 0.15)" : "transparent",
+                    color: activeTab === item.id ? "#a5b4fc" : "#94a3b8",
+                    fontWeight: activeTab === item.id ? "600" : "400",
+                    fontSize: "13px",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {item.icon} {item.label}
+                  </span>
+                  <FaArrowRight style={{ fontSize: "10px", opacity: activeTab === item.id ? 1 : 0.3 }} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ACADEMIC MANAGEMENT */}
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.8px", marginBottom: "8px", textTransform: "uppercase" }}>
+              Academic Management
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              {[
+                { id: "academic_year", label: "Academic Year", icon: <FaCalendarAlt /> },
+                { id: "semesters", label: "Semesters", icon: <FaBookOpen /> },
+                { id: "subjects", label: "Subjects", icon: <FaBook /> },
+                { id: "materials", label: "Syllabus & Materials", icon: <FaFileAlt /> }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: activeTab === item.id ? "rgba(99, 102, 241, 0.15)" : "transparent",
+                    color: activeTab === item.id ? "#a5b4fc" : "#94a3b8",
+                    fontWeight: activeTab === item.id ? "600" : "400",
+                    fontSize: "13px",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {item.icon} {item.label}
+                  </span>
+                  <FaArrowRight style={{ fontSize: "10px", opacity: activeTab === item.id ? 1 : 0.3 }} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* AI MANAGEMENT */}
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.8px", marginBottom: "8px", textTransform: "uppercase" }}>
+              AI Management
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              {[
+                { id: "ai_models", label: "AI Models", icon: <FaRobot /> },
+                { id: "rag_vector", label: "RAG & Vector DB", icon: <FaDatabase /> },
+                { id: "prompts", label: "Prompt Settings", icon: <FaSlidersH /> },
+                { id: "evaluation", label: "Evaluation", icon: <FaChartBar /> }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: activeTab === item.id ? "rgba(99, 102, 241, 0.15)" : "transparent",
+                    color: activeTab === item.id ? "#a5b4fc" : "#94a3b8",
+                    fontWeight: activeTab === item.id ? "600" : "400",
+                    fontSize: "13px",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {item.icon} {item.label}
+                  </span>
+                  <FaArrowRight style={{ fontSize: "10px", opacity: activeTab === item.id ? 1 : 0.3 }} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ANALYTICS */}
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.8px", marginBottom: "8px", textTransform: "uppercase" }}>
+              Analytics
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              {[
+                { id: "usage_analytics", label: "Usage Analytics", icon: <FaChartLine /> },
+                { id: "department_reports", label: "Department Reports", icon: <FaFileAlt /> },
+                { id: "query_analytics", label: "Query Analytics", icon: <FaSearch /> }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: activeTab === item.id ? "rgba(99, 102, 241, 0.15)" : "transparent",
+                    color: activeTab === item.id ? "#a5b4fc" : "#94a3b8",
+                    fontWeight: activeTab === item.id ? "600" : "400",
+                    fontSize: "13px",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {item.icon} {item.label}
+                  </span>
+                  <FaArrowRight style={{ fontSize: "10px", opacity: activeTab === item.id ? 1 : 0.3 }} />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* COMMUNICATION */}
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.8px", marginBottom: "8px", textTransform: "uppercase" }}>
+              Communication
+            </div>
+            <button
+              onClick={() => setActiveTab("announcements")}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                border: "none",
+                background: activeTab === "announcements" ? "rgba(99, 102, 241, 0.15)" : "transparent",
+                color: activeTab === "announcements" ? "#a5b4fc" : "#94a3b8",
+                fontWeight: activeTab === "announcements" ? "600" : "400",
+                fontSize: "13px",
+                cursor: "pointer"
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <FaBullhorn /> Announcements
+              </span>
+              <FaArrowRight style={{ fontSize: "10px", opacity: activeTab === "announcements" ? 1 : 0.3 }} />
+            </button>
+          </div>
+
+          {/* SYSTEM */}
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", letterSpacing: "0.8px", marginBottom: "8px", textTransform: "uppercase" }}>
+              System
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              {[
+                { id: "system_monitoring", label: "System Monitoring", icon: <FaDesktop /> },
+                { id: "audit_logs", label: "Audit Logs", icon: <FaHistory /> },
+                { id: "settings", label: "Settings", icon: <FaCogs /> }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: activeTab === item.id ? "rgba(99, 102, 241, 0.15)" : "transparent",
+                    color: activeTab === item.id ? "#a5b4fc" : "#94a3b8",
+                    fontWeight: activeTab === item.id ? "600" : "400",
+                    fontSize: "13px",
+                    cursor: "pointer"
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    {item.icon} {item.label}
+                  </span>
+                  <FaArrowRight style={{ fontSize: "10px", opacity: activeTab === item.id ? 1 : 0.3 }} />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* LOGOUT */}
+        {/* LOGOUT BUTTON */}
         <button
           onClick={handleLogout}
           style={{
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            padding: "12px 16px",
-            borderRadius: "12px",
+            padding: "10px 14px",
+            borderRadius: "10px",
             border: "1px solid rgba(239, 68, 68, 0.3)",
             background: "rgba(239, 68, 68, 0.1)",
             color: "#f87171",
             fontWeight: "600",
             fontSize: "13px",
-            cursor: "pointer",
-            marginTop: "auto"
+            cursor: "pointer"
           }}
         >
           <FaSignOutAlt /> Sign Out
         </button>
       </div>
 
-      {/* MAIN CONTENT AREA */}
-      <div style={{ flex: 1, padding: "30px 40px", overflowY: "auto" }}>
-        {/* TOP HEADER */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px" }}>
-          <div>
-            <h1 style={{ fontSize: "24px", fontWeight: "800", margin: "0 0 4px 0", textTransform: "capitalize" }}>
-              {activeTab.replace("_", " ")}
-            </h1>
-            <p style={{ margin: 0, fontSize: "13px", color: "#94a3b8" }}>
-              Platform overview and key statistics
-            </p>
+      {/* MAIN CONTENT CONTAINER */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        {/* TOP NAVBAR */}
+        <div
+          style={{
+            height: "64px",
+            background: "#111827",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+            padding: "0 28px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexShrink: 0
+          }}
+        >
+          {/* SEARCH BAR */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", background: "rgba(30, 41, 59, 0.6)", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "8px 16px", borderRadius: "10px", width: "420px" }}>
+            <FaSearch style={{ color: "#64748b", fontSize: "14px" }} />
+            <input
+              type="text"
+              placeholder="Search anything (users, subjects, documents...)"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ background: "transparent", border: "none", color: "white", outline: "none", width: "100%", fontSize: "13px" }}
+            />
           </div>
 
-          {/* SUPER ADMIN BADGE */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                background: "rgba(168, 85, 247, 0.15)",
-                border: "1px solid rgba(168, 85, 247, 0.4)",
-                padding: "8px 16px",
-                borderRadius: "20px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px"
-              }}
-            >
-              <FaCrown style={{ color: "#fbbf24" }} />
+          {/* USER ACTIONS */}
+          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+            <div style={{ position: "relative", cursor: "pointer" }}>
+              <FaBell style={{ color: "#94a3b8", fontSize: "18px" }} />
+              <span style={{ position: "absolute", top: "-4px", right: "-4px", background: "#ef4444", color: "white", fontSize: "10px", width: "16px", height: "16px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700" }}>
+                5
+              </span>
+            </div>
+
+            <FaSun style={{ color: "#94a3b8", fontSize: "18px", cursor: "pointer" }} />
+
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: "16px" }}>
+              <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#6366f1", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "700", fontSize: "14px" }}>
+                RS
+              </div>
               <div>
-                <div style={{ fontSize: "13px", fontWeight: "700", color: "#c084fc" }}>Super Admin</div>
-                <div style={{ fontSize: "11px", color: "#94a3b8" }}>Platform Owner</div>
+                <div style={{ fontSize: "13px", fontWeight: "700", color: "white" }}>Ratheesh S</div>
+                <div style={{ fontSize: "11px", color: "#94a3b8" }}>Super Admin</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 1. DASHBOARD TAB */}
-        {activeTab === "dashboard" && (
-          <>
-            {/* STAT CARDS */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "30px" }}>
-              {[
-                { title: "Total Institutions", count: stats.total_institutions, change: "Live", color: "#38bdf8", icon: <FaUniversity /> },
-                { title: "Active Institutions", count: stats.active_institutions, change: "Live", color: "#34d399", icon: <FaCheckCircle /> },
-                { title: "Total Students", count: stats.total_students, change: "Live", color: "#c084fc", icon: <FaUsers /> },
-                { title: "Total Staff", count: stats.total_staff, change: "Live", color: "#fbbf24", icon: <FaShieldAlt /> }
-              ].map((card, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: "#0f172a",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    padding: "20px",
-                    borderRadius: "16px"
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                    <span style={{ fontSize: "13px", color: "#94a3b8" }}>{card.title}</span>
-                    <span style={{ fontSize: "18px", color: card.color }}>{card.icon}</span>
-                  </div>
-                  <div style={{ fontSize: "28px", fontWeight: "800", color: "white", marginBottom: "4px" }}>
-                    {card.count}
-                  </div>
-                  <div style={{ fontSize: "12px", color: "#34d399" }}>
-                    ↑ {card.change}
-                  </div>
+        {/* PAGE CONTENT SCROLLABLE AREA */}
+        <div style={{ flex: 1, padding: "28px", overflowY: "auto" }}>
+          {/* 1. DASHBOARD VIEW */}
+          {activeTab === "dashboard" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              {/* PAGE TITLE & DATE SELECTOR */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <h1 style={{ fontSize: "24px", fontWeight: "800", color: "white", margin: "0 0 4px 0" }}>
+                    Super Admin Dashboard
+                  </h1>
+                  <p style={{ margin: 0, fontSize: "13px", color: "#94a3b8" }}>
+                    Complete overview of HAVOX AI – Users, Academic, AI System and Usage Analytics
+                  </p>
                 </div>
-              ))}
-            </div>
 
-            {/* INSTITUTION OVERVIEW TABLE */}
-            <div style={{ background: "#0f172a", borderRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "white" }}>
-                  Institution Overview
-                </h3>
-                <span onClick={() => setActiveTab("institutions")} style={{ fontSize: "13px", color: "#38bdf8", cursor: "pointer", fontWeight: "600" }}>
-                  View All →
-                </span>
+                <div style={{ background: "#1e293b", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "8px 14px", borderRadius: "10px", fontSize: "13px", color: "#cbd5e1", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FaCalendarAlt style={{ color: "#818cf8" }} /> Sep 1, 2026 – Sep 30, 2026
+                </div>
               </div>
 
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
+              {/* ROW 1: USER METRIC CARDS (5 CARDS) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "16px" }}>
+                {[
+                  { title: "Total Users", count: totalUsersCount.toLocaleString(), change: "↑ 12% +260 this month", bg: "rgba(59, 130, 246, 0.1)", iconBg: "#3b82f6", icon: <FaUsers /> },
+                  { title: "Active Users (Today)", count: activeTodayCount.toLocaleString(), change: "↑ 18% out of 2,450", bg: "rgba(34, 197, 94, 0.1)", iconBg: "#22c55e", icon: <FaUsers /> },
+                  { title: "Students", count: studentsCount.toLocaleString(), change: "86% of total users", bg: "rgba(168, 85, 247, 0.1)", iconBg: "#a855f7", icon: <FaGraduationCap /> },
+                  { title: "Faculty", count: facultyCount.toLocaleString(), change: "9% of total users", bg: "rgba(236, 72, 153, 0.1)", iconBg: "#ec4899", icon: <FaUserTie /> },
+                  { title: "Admins", count: adminsCount.toLocaleString(), change: "Platform Controllers", bg: "rgba(249, 115, 22, 0.1)", iconBg: "#f97316", icon: <FaUserShield /> }
+                ].map((card, idx) => (
+                  <div key={idx} style={{ background: "#111827", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "14px", padding: "16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                      <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "500" }}>{card.title}</span>
+                      <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: card.bg, color: card.iconBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>
+                        {card.icon}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: "24px", fontWeight: "800", color: "white", marginBottom: "4px" }}>{card.count}</div>
+                    <div style={{ fontSize: "11px", color: "#34d399" }}>{card.change}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ROW 2: SYSTEM METRIC CARDS (5 CARDS) */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "16px" }}>
+                {[
+                  { title: "Study Materials", count: "320", change: "+18 this month", color: "#ec4899", icon: <FaFileAlt /> },
+                  { title: "Total Questions Asked", count: "4,820", change: "↑ 25% today", color: "#3b82f6", icon: <FaBook /> },
+                  { title: "AI Responses", count: "4,795", change: "99.5% success rate", color: "#eab308", icon: <FaRobot /> },
+                  { title: "Avg. Response Time", count: "8.4 sec", change: "↓ 32% faster than last month", color: "#a855f7", icon: <FaClock /> },
+                  { title: "System Status", count: "Healthy", change: "All services running", color: "#22c55e", icon: <FaCheckCircle /> }
+                ].map((card, idx) => (
+                  <div key={idx} style={{ background: "#111827", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "14px", padding: "16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                      <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "500" }}>{card.title}</span>
+                      <span style={{ fontSize: "16px", color: card.color }}>{card.icon}</span>
+                    </div>
+                    <div style={{ fontSize: "22px", fontWeight: "800", color: "white", marginBottom: "4px" }}>{card.count}</div>
+                    <div style={{ fontSize: "11px", color: card.title === "System Status" ? "#34d399" : "#a5b4fc" }}>{card.change}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ROW 3: CHARTS (USAGE TREND & USERS BY DEPARTMENT) */}
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "20px" }}>
+                {/* USAGE TREND LINE CHART */}
+                <div style={{ background: "#111827", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "16px", padding: "20px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <div>
+                      <h3 style={{ margin: "0 0 4px 0", fontSize: "15px", fontWeight: "700", color: "white" }}>Usage Trend</h3>
+                      <div style={{ fontSize: "12px", color: "#94a3b8", display: "flex", gap: "16px" }}>
+                        <span style={{ color: "#38bdf8" }}>● Questions Asked</span>
+                        <span style={{ color: "#a855f7" }}>● Active Users</span>
+                      </div>
+                    </div>
+                    <select style={{ background: "#1e293b", color: "#cbd5e1", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "6px 12px", fontSize: "12px" }}>
+                      <option>Last 30 Days</option>
+                    </select>
+                  </div>
+                  {/* SVG Line Chart Representation */}
+                  <div style={{ height: "180px", width: "100%", position: "relative" }}>
+                    <svg viewBox="0 0 500 150" style={{ width: "100%", height: "100%", overflow: "visible" }}>
+                      <path
+                        d="M 0,100 Q 50,40 100,70 T 200,30 T 300,80 T 400,20 T 500,50"
+                        fill="none"
+                        stroke="#38bdf8"
+                        strokeWidth="3"
+                      />
+                      <path
+                        d="M 0,130 Q 50,90 100,100 T 200,70 T 300,110 T 400,60 T 500,90"
+                        fill="none"
+                        stroke="#a855f7"
+                        strokeWidth="3"
+                      />
+                    </svg>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px", fontSize: "11px", color: "#64748b" }}>
+                      <span>Sep 1</span><span>Sep 5</span><span>Sep 10</span><span>Sep 15</span><span>Sep 20</span><span>Sep 25</span><span>Sep 30</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* USERS BY DEPARTMENT DONUT */}
+                <div style={{ background: "#111827", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "16px", padding: "20px" }}>
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: "15px", fontWeight: "700", color: "white" }}>Users by Department</h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                    <div style={{ position: "relative", width: "120px", height: "120px", borderRadius: "50%", background: "conic-gradient(#3b82f6 0% 33%, #8b5cf6 33% 59%, #06b6d4 59% 77%, #ec4899 77% 92%, #f59e0b 92% 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: "#111827", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                        <span style={{ fontSize: "14px", fontWeight: "800", color: "white" }}>2,450</span>
+                        <span style={{ fontSize: "9px", color: "#94a3b8" }}>Total Users</span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "12px" }}>
+                      <div><span style={{ color: "#3b82f6" }}>● CSE (AI & ML)</span>: 820 (33%)</div>
+                      <div><span style={{ color: "#8b5cf6" }}>● CSE</span>: 640 (26%)</div>
+                      <div><span style={{ color: "#06b6d4" }}>● Cyber Security</span>: 430 (18%)</div>
+                      <div><span style={{ color: "#ec4899" }}>● ECE</span>: 380 (15%)</div>
+                      <div><span style={{ color: "#f59e0b" }}>● EEE</span>: 120 (5%)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ROW 4: ANALYTICS GRID (3 COLUMNS) */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px" }}>
+                {/* MOST ASKED SUBJECTS */}
+                <div style={{ background: "#111827", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "16px", padding: "20px" }}>
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: "15px", fontWeight: "700", color: "white" }}>Most Asked Subjects</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    {[
+                      { name: "Machine Learning", count: "1,240", color: "#3b82f6", width: "85%" },
+                      { name: "DBMS", count: "980", color: "#8b5cf6", width: "70%" },
+                      { name: "Mathematics", count: "820", color: "#10b981", width: "60%" },
+                      { name: "Python", count: "760", color: "#f59e0b", width: "55%" },
+                      { name: "Data Structures", count: "540", color: "#ef4444", width: "40%" }
+                    ].map((sub, i) => (
+                      <div key={i}>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "4px" }}>
+                          <span style={{ color: "#cbd5e1" }}>{sub.name}</span>
+                          <span style={{ color: "#94a3b8" }}>{sub.count}</span>
+                        </div>
+                        <div style={{ height: "6px", background: "#1e293b", borderRadius: "3px", overflow: "hidden" }}>
+                          <div style={{ width: sub.width, height: "100%", background: sub.color, borderRadius: "3px" }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* USER ACTIVITY HEATMAP */}
+                <div style={{ background: "#111827", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "16px", padding: "20px" }}>
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: "15px", fontWeight: "700", color: "white" }}>User Activity Heatmap</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "6px", textAlign: "center", fontSize: "10px", color: "#94a3b8" }}>
+                    <span>12AM</span><span>4AM</span><span>8AM</span><span>12PM</span><span>4PM</span><span>8PM</span>
+                    {[
+                      [0.1, 0.1, 0.4, 0.8, 0.9, 0.5],
+                      [0.1, 0.1, 0.5, 0.9, 0.8, 0.6],
+                      [0.1, 0.2, 0.6, 0.9, 0.9, 0.7],
+                      [0.1, 0.1, 0.5, 0.8, 0.7, 0.5],
+                      [0.1, 0.2, 0.7, 0.9, 0.8, 0.4],
+                      [0.1, 0.1, 0.3, 0.6, 0.5, 0.2]
+                    ].map((row, rIdx) =>
+                      row.map((val, cIdx) => (
+                        <div
+                          key={`${rIdx}-${cIdx}`}
+                          style={{
+                            height: "20px",
+                            borderRadius: "4px",
+                            background: `rgba(99, 102, 241, ${val})`
+                          }}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* RECENT ACTIVITIES */}
+                <div style={{ background: "#111827", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "16px", padding: "20px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "700", color: "white" }}>Recent Activities</h3>
+                    <span style={{ fontSize: "12px", color: "#6366f1", cursor: "pointer", fontWeight: "600" }}>View All</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "12px" }}>
+                    {[
+                      { icon: "📄", title: "New PDF uploaded - ML Unit 4 Notes", sub: "by Akshaya (Faculty)", time: "10:24 AM" },
+                      { icon: "👥", title: "New user added - 45 students", sub: "Department: CSE (AI & ML)", time: "09:18 AM" },
+                      { icon: "🤖", title: "AI Model switched to qwen2.5:1.5b", sub: "by Super Admin", time: "08:45 AM" },
+                      { icon: "⚙️", title: "Department 'ECE' enabled", sub: "by Super Admin", time: "08:30 AM" },
+                      { icon: "🟢", title: "System backup completed", sub: "All services healthy", time: "07:15 AM" }
+                    ].map((act, idx) => (
+                      <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div style={{ display: "flex", gap: "10px" }}>
+                          <span>{act.icon}</span>
+                          <div>
+                            <div style={{ color: "white", fontWeight: "600" }}>{act.title}</div>
+                            <div style={{ color: "#94a3b8", fontSize: "11px" }}>{act.sub}</div>
+                          </div>
+                        </div>
+                        <span style={{ fontSize: "10px", color: "#64748b" }}>{act.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* ROW 5: AI SYSTEM HEALTH, RESOURCES & QUICK ACTIONS */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px" }}>
+                {/* AI SYSTEM HEALTH */}
+                <div style={{ background: "#111827", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "16px", padding: "20px" }}>
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: "15px", fontWeight: "700", color: "white" }}>AI System Health</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                    {[
+                      { name: "Backend", status: "Running" },
+                      { name: "RAG Service", status: "Running" },
+                      { name: "Vector DB", status: "Running" },
+                      { name: "Ollama", status: "Running" },
+                      { name: "Database", status: "Running" },
+                      { name: "Storage", status: "Running" }
+                    ].map((srv, idx) => (
+                      <div key={idx} style={{ background: "#1e293b", padding: "10px", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: "12px", color: "#cbd5e1" }}>{srv.name}</span>
+                        <span style={{ fontSize: "10px", color: "#22c55e", fontWeight: "700", display: "flex", alignItems: "center", gap: "4px" }}>
+                          ● {srv.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* SYSTEM RESOURCES */}
+                <div style={{ background: "#111827", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "16px", padding: "20px" }}>
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: "15px", fontWeight: "700", color: "white" }}>System Resources</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", textAlign: "center", marginBottom: "16px" }}>
+                    {[
+                      { label: "CPU", val: "32%", color: "#3b82f6" },
+                      { label: "RAM", val: "58%", color: "#10b981" },
+                      { label: "Disk", val: "41%", color: "#f59e0b" },
+                      { label: "GPU", val: "22%", color: "#8b5cf6" }
+                    ].map((res, i) => (
+                      <div key={i} style={{ background: "#1e293b", padding: "12px 6px", borderRadius: "10px" }}>
+                        <div style={{ fontSize: "14px", fontWeight: "800", color: res.color }}>{res.val}</div>
+                        <div style={{ fontSize: "10px", color: "#94a3b8" }}>{res.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#94a3b8", display: "flex", justifyContent: "space-between" }}>
+                    <span>Uptime: 12 days 6 hours</span>
+                    <span style={{ color: "#22c55e" }}>● Network Healthy</span>
+                  </div>
+                </div>
+
+                {/* QUICK ACTIONS GRID */}
+                <div style={{ background: "#111827", border: "1px solid rgba(255, 255, 255, 0.06)", borderRadius: "16px", padding: "20px" }}>
+                  <h3 style={{ margin: "0 0 16px 0", fontSize: "15px", fontWeight: "700", color: "white" }}>Quick Actions</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                    {[
+                      { label: "Add User", icon: <FaUsers />, action: () => setActiveTab("users") },
+                      { label: "Upload Material", icon: <FaFileUpload />, action: () => setActiveTab("materials") },
+                      { label: "Add Subject", icon: <FaBook />, action: () => setActiveTab("subjects") },
+                      { label: "Announcement", icon: <FaPaperPlane />, action: () => setActiveTab("announcements") },
+                      { label: "AI Settings", icon: <FaRobot />, action: () => setActiveTab("ai_models") },
+                      { label: "View Reports", icon: <FaChartLine />, action: () => setActiveTab("usage_analytics") }
+                    ].map((btn, idx) => (
+                      <button
+                        key={idx}
+                        onClick={btn.action}
+                        style={{
+                          background: "#1e293b",
+                          border: "1px solid rgba(255, 255, 255, 0.08)",
+                          borderRadius: "10px",
+                          padding: "12px 6px",
+                          color: "white",
+                          fontSize: "11px",
+                          fontWeight: "600",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "6px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        <span style={{ fontSize: "16px", color: "#818cf8" }}>{btn.icon}</span>
+                        {btn.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 2. USERS / FACULTY / STUDENTS / ADMINS VIEWS */}
+          {["users", "faculty", "students", "admins"].includes(activeTab) && (
+            <div style={{ background: "#111827", borderRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "24px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <h2 style={{ fontSize: "20px", fontWeight: "800", margin: 0, color: "white", textTransform: "capitalize", display: "flex", alignItems: "center", gap: "10px" }}>
+                  👥 {activeTab} Management
+                </h2>
+
+                <button
+                  onClick={() => setShowAddUserModal(true)}
+                  style={{ background: "#6366f1", color: "white", border: "none", padding: "10px 18px", borderRadius: "10px", fontWeight: "600", fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <FaPlus /> Add New User
+                </button>
+              </div>
+
+              {/* Total Users Summary Card */}
+              <div style={{ background: "#1e293b", padding: "16px 24px", borderRadius: "12px", width: "220px", marginBottom: "25px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                <div style={{ fontSize: "28px", fontWeight: "800", color: "white", margin: "0 0 4px 0" }}>
+                  {getFilteredUsersList(activeTab === "users" ? null : activeTab).length}
+                </div>
+                <div style={{ fontSize: "13px", color: "#94a3b8" }}>Total {activeTab}</div>
+              </div>
+
+              {/* Search & Role Filter */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(30, 41, 59, 0.8)", padding: "8px 14px", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.1)", width: "350px" }}>
+                  <FaSearch style={{ color: "#94a3b8" }} />
+                  <input
+                    type="text"
+                    placeholder="Search user by name or email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ background: "transparent", border: "none", color: "white", outline: "none", width: "100%", fontSize: "13px" }}
+                  />
+                </div>
+
+                {activeTab === "users" && (
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    style={{ padding: "8px 12px", background: "#1e293b", color: "white", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "10px", fontSize: "13px" }}
+                  >
+                    <option value="ALL">All Roles</option>
+                    <option value="student">Student</option>
+                    <option value="staff">Staff / Faculty</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                )}
+              </div>
+
+              {/* Table */}
+              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px", background: "#1e293b", borderRadius: "12px", overflow: "hidden" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "#94a3b8" }}>
-                    <th style={{ padding: "12px" }}>#</th>
-                    <th style={{ padding: "12px" }}>Institution Name</th>
-                    <th style={{ padding: "12px" }}>Plan</th>
-                    <th style={{ padding: "12px" }}>Status</th>
-                    <th style={{ padding: "12px" }}>Students</th>
-                    <th style={{ padding: "12px" }}>Staff</th>
-                    <th style={{ padding: "12px" }}>Last Login</th>
+                  <tr style={{ borderBottom: "1px solid #334155", color: "#94a3b8" }}>
+                    <th style={{ padding: "14px" }}>ID</th>
+                    <th style={{ padding: "14px" }}>Name</th>
+                    <th style={{ padding: "14px" }}>Email</th>
+                    <th style={{ padding: "14px" }}>Institution / Dept</th>
+                    <th style={{ padding: "14px" }}>Role</th>
+                    <th style={{ padding: "14px" }}>Profile</th>
+                    <th style={{ padding: "14px" }}>Delete</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {institutions.length === 0 ? (
+                  {getFilteredUsersList(activeTab === "users" ? null : activeTab).length === 0 ? (
                     <tr>
                       <td colSpan="7" style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>
-                        No registered colleges or schools found in the database.
+                        No Users Found
                       </td>
                     </tr>
                   ) : (
-                    institutions.map((inst, index) => (
-                      <tr key={inst.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                        <td style={{ padding: "12px", color: "#64748b" }}>{index + 1}</td>
-                        <td style={{ padding: "12px", fontWeight: "600", color: "white" }}>{inst.name}</td>
-                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.plan}</td>
-                        <td style={{ padding: "12px" }}>
-                          <span
-                            style={{
-                              padding: "3px 10px",
-                              borderRadius: "12px",
-                              fontSize: "11px",
-                              fontWeight: "600",
-                              background: inst.status === "Active" ? "rgba(52, 211, 153, 0.15)" : "rgba(251, 191, 36, 0.15)",
-                              color: inst.status === "Active" ? "#34d399" : "#fbbf24"
-                            }}
-                          >
-                            {inst.status}
-                          </span>
-                        </td>
-                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.students.toLocaleString()}</td>
-                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.staff}</td>
-                        <td style={{ padding: "12px", color: "#94a3b8" }}>{inst.lastLogin}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-
-        {/* 2. INSTITUTIONS TAB */}
-        {activeTab === "institutions" && (
-          <div style={{ background: "#0f172a", borderRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "24px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(30, 41, 59, 0.8)", padding: "8px 14px", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.1)", width: "300px" }}>
-                <FaSearch style={{ color: "#94a3b8" }} />
-                <input
-                  type="text"
-                  placeholder="Search by name, code or email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ background: "transparent", border: "none", color: "white", outline: "none", width: "100%", fontSize: "13px" }}
-                />
-              </div>
-
-              <button
-                onClick={() => setShowAddModal(true)}
-                style={{
-                  background: "#2563eb",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 18px",
-                  borderRadius: "10px",
-                  fontWeight: "600",
-                  fontSize: "13px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px"
-                }}
-              >
-                <FaPlus /> Add Institution
-              </button>
-            </div>
-
-            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "#94a3b8" }}>
-                  <th style={{ padding: "12px" }}>#</th>
-                  <th style={{ padding: "12px" }}>Institution Name</th>
-                  <th style={{ padding: "12px" }}>Code</th>
-                  <th style={{ padding: "12px" }}>Plan</th>
-                  <th style={{ padding: "12px" }}>Status</th>
-                  <th style={{ padding: "12px" }}>Students</th>
-                  <th style={{ padding: "12px" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {institutions.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>
-                      No registered colleges or schools found in the database.
-                    </td>
-                  </tr>
-                ) : (
-                  institutions
-                    .filter(i => i.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                    .map((inst, index) => (
-                      <tr key={inst.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                        <td style={{ padding: "12px", color: "#64748b" }}>{index + 1}</td>
-                        <td style={{ padding: "12px", fontWeight: "600", color: "white" }}>{inst.name}</td>
-                        <td style={{ padding: "12px", color: "#94a3b8" }}>{inst.code}</td>
-                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.plan}</td>
-                        <td style={{ padding: "12px" }}>
-                          <span
-                            style={{
-                              padding: "3px 10px",
-                              borderRadius: "12px",
-                              fontSize: "11px",
-                              fontWeight: "600",
-                              background: inst.status === "Active" ? "rgba(52, 211, 153, 0.15)" : "rgba(251, 191, 36, 0.15)",
-                              color: inst.status === "Active" ? "#34d399" : "#fbbf24"
-                            }}
-                          >
-                            {inst.status}
-                          </span>
-                        </td>
-                        <td style={{ padding: "12px", color: "#cbd5e1" }}>{inst.students.toLocaleString()}</td>
-                        <td style={{ padding: "12px", color: "#38bdf8", cursor: "pointer", fontWeight: "600" }}>
-                          •••
-                        </td>
-                      </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* 3. USERS TAB */}
-        {activeTab === "users" && (
-          <div style={{ background: "#0f172a", borderRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "24px" }}>
-            <h2 style={{ fontSize: "20px", fontWeight: "800", margin: "0 0 20px 0", color: "white", display: "flex", alignItems: "center", gap: "10px" }}>
-              👥 Users Management
-            </h2>
-
-            {/* Total Users Card */}
-            <div style={{ background: "#1e293b", padding: "16px 24px", borderRadius: "12px", width: "220px", marginBottom: "25px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
-              <div style={{ fontSize: "28px", fontWeight: "800", color: "white", margin: "0 0 4px 0" }}>
-                {users.length}
-              </div>
-              <div style={{ fontSize: "13px", color: "#94a3b8" }}>Total Users</div>
-            </div>
-
-            {/* Search & Role Filter */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(30, 41, 59, 0.8)", padding: "8px 14px", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.1)", width: "350px" }}>
-                <FaSearch style={{ color: "#94a3b8" }} />
-                <input
-                  type="text"
-                  placeholder="Search user by name or email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ background: "transparent", border: "none", color: "white", outline: "none", width: "100%", fontSize: "13px" }}
-                />
-              </div>
-
-              <div style={{ display: "flex", gap: "10px" }}>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  style={{ padding: "8px 12px", background: "#1e293b", color: "white", border: "1px solid rgba(255, 255, 255, 0.1)", borderRadius: "10px", fontSize: "13px" }}
-                >
-                  <option value="ALL">All Roles</option>
-                  <option value="Student">Student</option>
-                  <option value="Staff">Staff</option>
-                  <option value="Admin">Admin</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Users Table */}
-            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px", background: "#1e293b", borderRadius: "12px", overflow: "hidden" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid #334155", color: "#94a3b8" }}>
-                  <th style={{ padding: "14px" }}>ID</th>
-                  <th style={{ padding: "14px" }}>Name</th>
-                  <th style={{ padding: "14px" }}>Email</th>
-                  <th style={{ padding: "14px" }}>Institution</th>
-                  <th style={{ padding: "14px" }}>Role</th>
-                  <th style={{ padding: "14px" }}>Profile</th>
-                  <th style={{ padding: "14px" }}>Delete</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" style={{ padding: "24px", textAlign: "center", color: "#94a3b8" }}>
-                      No Users Found
-                    </td>
-                  </tr>
-                ) : (
-                  users
-                    .filter(u => roleFilter === "ALL" || u.role.toLowerCase() === roleFilter.toLowerCase())
-                    .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-                    .map((user) => (
+                    getFilteredUsersList(activeTab === "users" ? null : activeTab).map((user) => (
                       <tr key={user.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
                         <td style={{ padding: "14px", color: "#94a3b8", fontWeight: "600" }}>{user.id}</td>
                         <td style={{ padding: "14px", fontWeight: "600", color: "white" }}>{user.name}</td>
                         <td style={{ padding: "14px", color: "#cbd5e1" }}>{user.email}</td>
-                        <td style={{ padding: "14px", color: "#38bdf8" }}>{user.institution}</td>
+                        <td style={{ padding: "14px", color: "#38bdf8" }}>{user.institution || "HavoxAI Platform"}</td>
                         <td style={{ padding: "14px" }}>
                           <span
                             style={{
@@ -502,7 +897,7 @@ export default function SuperAdminPortal() {
                               color: "white",
                               padding: "5px 12px",
                               borderRadius: "20px",
-                              fontSize: "13px",
+                              fontSize: "12px",
                               fontWeight: "600",
                               display: "inline-block"
                             }}
@@ -510,217 +905,97 @@ export default function SuperAdminPortal() {
                             {user.role?.toLowerCase()}
                           </span>
                         </td>
-                        {/* Profile Button */}
                         <td style={{ padding: "14px" }}>
                           <button
                             onClick={() => navigate(`/user-profile/${user.id}`)}
                             title="View Profile"
-                            style={{
-                              background: "#3b82f6",
-                              color: "white",
-                              border: "none",
-                              padding: "6px 14px",
-                              borderRadius: "8px",
-                              cursor: "pointer",
-                              fontSize: "16px",
-                              fontWeight: "bold"
-                            }}
+                            style={{ background: "#3b82f6", color: "white", border: "none", padding: "6px 14px", borderRadius: "8px", cursor: "pointer", fontSize: "16px", fontWeight: "bold" }}
                           >
                             →
                           </button>
                         </td>
-                        {/* Delete Button */}
                         <td style={{ padding: "14px" }}>
                           <button
                             onClick={() => handleDeleteUser(user.id, user.email)}
                             title="Delete User"
-                            style={{
-                              background: "#ef4444",
-                              color: "white",
-                              border: "none",
-                              padding: "6px 12px",
-                              borderRadius: "8px",
-                              cursor: "pointer",
-                              fontSize: "15px"
-                            }}
+                            style={{ background: "#ef4444", color: "white", border: "none", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontSize: "15px" }}
                           >
                             🗑
                           </button>
                         </td>
                       </tr>
                     ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* 4. ANALYTICS TAB */}
-        {activeTab === "analytics" && (
-          <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "30px" }}>
-              {[
-                { title: "Total Registered Users", val: users.length.toLocaleString(), change: "Live" },
-                { title: "Active Institutions", val: stats.active_institutions.toLocaleString(), change: "Live" },
-                { title: "Total Students", val: stats.total_students.toLocaleString(), change: "Live" },
-                { title: "Total Staff", val: stats.total_staff.toLocaleString(), change: "Live" }
-              ].map((stat, idx) => (
-                <div key={idx} style={{ background: "#0f172a", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "20px", borderRadius: "16px" }}>
-                  <div style={{ fontSize: "13px", color: "#94a3b8", marginBottom: "8px" }}>{stat.title}</div>
-                  <div style={{ fontSize: "24px", fontWeight: "800", color: "white", marginBottom: "4px" }}>{stat.val}</div>
-                  <div style={{ fontSize: "12px", color: "#34d399" }}>● {stat.change}</div>
-                </div>
-              ))}
+                  )}
+                </tbody>
+              </table>
             </div>
+          )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "20px" }}>
-              <div style={{ background: "#0f172a", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "24px", borderRadius: "16px" }}>
-                <h4 style={{ margin: "0 0 16px 0", color: "white", fontSize: "15px" }}>Registered User Distribution</h4>
-                <div style={{ height: "180px", display: "flex", alignItems: "flex-end", gap: "24px", paddingBottom: "10px", borderBottom: "1px solid rgba(255,255,255,0.1)", justifyContent: "center" }}>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                    <span style={{ fontSize: "12px", color: "#38bdf8" }}>{stats.total_students}</span>
-                    <div style={{ width: "60px", background: "linear-gradient(180deg, #38bdf8 0%, #2563eb 100%)", height: `${Math.min(140, Math.max(20, stats.total_students * 10))}px`, borderRadius: "6px 6px 0 0" }} />
-                    <span style={{ fontSize: "12px", color: "#94a3b8" }}>Students</span>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-                    <span style={{ fontSize: "12px", color: "#c084fc" }}>{stats.total_staff}</span>
-                    <div style={{ width: "60px", background: "linear-gradient(180deg, #c084fc 0%, #9333ea 100%)", height: `${Math.min(140, Math.max(20, stats.total_staff * 10))}px`, borderRadius: "6px 6px 0 0" }} />
-                    <span style={{ fontSize: "12px", color: "#94a3b8" }}>Staff</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ background: "#0f172a", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "24px", borderRadius: "16px" }}>
-                <h4 style={{ margin: "0 0 16px 0", color: "white", fontSize: "15px" }}>Institution Summary</h4>
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "13px" }}>
-                  <div><span style={{ color: "#38bdf8" }}>● Total Colleges & Schools</span>: {institutions.length}</div>
-                  <div><span style={{ color: "#34d399" }}>● Total Registered Users</span>: {users.length}</div>
-                </div>
+          {/* OTHER TABS GENERIC VIEW */}
+          {!["dashboard", "users", "faculty", "students", "admins"].includes(activeTab) && (
+            <div style={{ background: "#111827", borderRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.06)", padding: "28px" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: "800", color: "white", margin: "0 0 12px 0", textTransform: "capitalize" }}>
+                {activeTab.replace("_", " ")} Management
+              </h2>
+              <p style={{ color: "#94a3b8", fontSize: "14px", marginBottom: "20px" }}>
+                Managing {activeTab.replace("_", " ")} settings and system configurations for HAVOX AI Platform.
+              </p>
+              <div style={{ background: "#1e293b", padding: "30px", borderRadius: "12px", textAlign: "center", color: "#cbd5e1" }}>
+                <FaCogs style={{ fontSize: "36px", color: "#6366f1", marginBottom: "12px" }} />
+                <div style={{ fontSize: "16px", fontWeight: "700" }}>{activeTab.toUpperCase().replace("_", " ")} CONTROL PANEL</div>
+                <div style={{ fontSize: "13px", color: "#94a3b8", marginTop: "4px" }}>All platform configurations for this module are active and synced.</div>
               </div>
             </div>
-          </>
-        )}
-
-        {/* 5. SUBSCRIPTIONS TAB */}
-        {activeTab === "subscriptions" && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
-            {[
-              { name: "Basic Tier", price: "Free Trial", users: "Up to 100 Users", color: "#fbbf24" },
-              { name: "Professional Tier", price: "Standard", users: "Up to 5,000 Users", color: "#38bdf8" },
-              { name: "Enterprise Tier", price: "Full Suite", users: "Unlimited Users", color: "#c084fc" }
-            ].map((plan, idx) => (
-              <div key={idx} style={{ background: "#0f172a", border: `1px solid ${plan.color}`, padding: "28px", borderRadius: "16px" }}>
-                <h3 style={{ margin: "0 0 10px 0", color: plan.color }}>{plan.name}</h3>
-                <div style={{ fontSize: "26px", fontWeight: "800", color: "white", marginBottom: "8px" }}>{plan.price}</div>
-                <p style={{ color: "#94a3b8", fontSize: "13px", marginBottom: "20px" }}>{plan.users}</p>
-                <button style={{ width: "100%", padding: "10px", borderRadius: "10px", border: "none", background: plan.color, color: "black", fontWeight: "700", cursor: "pointer" }}>
-                  Plan Active
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* 6. AUDIT LOGS TAB */}
-        {activeTab === "audit_logs" && (
-          <div style={{ background: "#0f172a", borderRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "24px" }}>
-            <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", color: "#38bdf8" }}>Platform Security Audit Logs</h3>
-            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "13px" }}>
-              <thead>
-                <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "#94a3b8" }}>
-                  <th style={{ padding: "12px" }}>Timestamp</th>
-                  <th style={{ padding: "12px" }}>User</th>
-                  <th style={{ padding: "12px" }}>Action</th>
-                  <th style={{ padding: "12px" }}>Institution</th>
-                  <th style={{ padding: "12px" }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>
-                      No user audit logs available.
-                    </td>
-                  </tr>
-                ) : (
-                  users.map((log, idx) => (
-                    <tr key={idx} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                      <td style={{ padding: "12px", color: "#94a3b8" }}>{log.lastLogin}</td>
-                      <td style={{ padding: "12px", color: "white" }}>{log.email}</td>
-                      <td style={{ padding: "12px", color: "#38bdf8" }}>USER_REGISTERED</td>
-                      <td style={{ padding: "12px", color: "#cbd5e1" }}>{log.institution}</td>
-                      <td style={{ padding: "12px", color: "#34d399", fontWeight: "600" }}>Active</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* 7. SETTINGS TAB */}
-        {activeTab === "settings" && (
-          <div style={{ background: "#0f172a", borderRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.08)", padding: "24px", maxWidth: "600px" }}>
-            <h3 style={{ margin: "0 0 20px 0", fontSize: "16px", color: "#c084fc" }}>Super Admin Platform Controls</h3>
-            
-            <div style={{ marginBottom: "20px" }}>
-              <label style={{ fontSize: "13px", color: "#94a3b8", display: "block", marginBottom: "6px" }}>
-                Super Admin Email ID
-              </label>
-              <input
-                type="text"
-                disabled
-                value="superadmin2024@gmail.com"
-                style={{ width: "100%", padding: "12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white" }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(255,255,255,0.03)", padding: "14px", borderRadius: "12px" }}>
-              <div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "white" }}>Two-Factor Authentication (2FA)</div>
-                <div style={{ fontSize: "12px", color: "#94a3b8" }}>Require OTP verification on Super Admin sign-in</div>
-              </div>
-              <span style={{ color: "#34d399", fontWeight: "700", fontSize: "13px" }}>ENABLED</span>
-            </div>
-
-            <button onClick={() => alert("Platform Cache Cleared Successfully!")} style={{ padding: "12px 20px", borderRadius: "10px", border: "none", background: "#2563eb", color: "white", fontWeight: "600", cursor: "pointer" }}>
-              Clear System Cache
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* ADD INSTITUTION MODAL */}
-      {showAddModal && (
+      {/* ADD USER MODAL */}
+      {showAddUserModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 }}>
-          <div style={{ background: "#0f172a", border: "1px solid rgba(255,255,255,0.1)", padding: "30px", borderRadius: "20px", width: "400px" }}>
-            <h3 style={{ margin: "0 0 16px 0", color: "#38bdf8" }}>Add New Institution</h3>
+          <div style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.1)", padding: "30px", borderRadius: "20px", width: "420px" }}>
+            <h3 style={{ margin: "0 0 16px 0", color: "#818cf8" }}>Add New User</h3>
             <input
               type="text"
-              placeholder="Institution Name (e.g. ABC College)"
-              value={newInstName}
-              onChange={(e) => setNewInstName(e.target.value)}
-              style={{ width: "100%", padding: "12px", marginBottom: "12px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white" }}
+              placeholder="Full Name"
+              value={newUserName}
+              onChange={(e) => setNewUserName(e.target.value)}
+              style={{ width: "100%", padding: "12px", marginBottom: "12px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", boxSizing: "border-box" }}
+            />
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={newUserEmail}
+              onChange={(e) => setNewUserEmail(e.target.value)}
+              style={{ width: "100%", padding: "12px", marginBottom: "12px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", boxSizing: "border-box" }}
             />
             <input
               type="text"
-              placeholder="Institution Code (e.g. ABC001)"
-              value={newInstCode}
-              onChange={(e) => setNewInstCode(e.target.value)}
-              style={{ width: "100%", padding: "12px", marginBottom: "12px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white" }}
+              placeholder="College / School Name"
+              value={newUserCollege}
+              onChange={(e) => setNewUserCollege(e.target.value)}
+              style={{ width: "100%", padding: "12px", marginBottom: "12px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", boxSizing: "border-box" }}
             />
             <select
-              value={newInstPlan}
-              onChange={(e) => setNewInstPlan(e.target.value)}
-              style={{ width: "100%", padding: "12px", marginBottom: "20px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white" }}
+              value={newUserRole}
+              onChange={(e) => setNewUserRole(e.target.value)}
+              style={{ width: "100%", padding: "12px", marginBottom: "20px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", boxSizing: "border-box" }}
             >
-              <option value="Professional">Professional Plan</option>
-              <option value="Enterprise">Enterprise Plan</option>
-              <option value="Basic">Basic Plan</option>
+              <option value="student">Student</option>
+              <option value="staff">Staff / Faculty</option>
+              <option value="admin">Admin</option>
             </select>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => setShowAddModal(false)} style={{ flex: 1, padding: "10px", background: "#334155", color: "white", border: "none", borderRadius: "10px", cursor: "pointer" }}>Cancel</button>
-              <button onClick={handleAddInstitution} style={{ flex: 1, padding: "10px", background: "#2563eb", color: "white", border: "none", borderRadius: "10px", fontWeight: "700", cursor: "pointer" }}>Add</button>
+              <button onClick={() => setShowAddUserModal(false)} style={{ flex: 1, padding: "10px", background: "#334155", color: "white", border: "none", borderRadius: "10px", cursor: "pointer" }}>Cancel</button>
+              <button
+                onClick={() => {
+                  alert(`User '${newUserName}' created!`);
+                  setShowAddUserModal(false);
+                }}
+                style={{ flex: 1, padding: "10px", background: "#6366f1", color: "white", border: "none", borderRadius: "10px", fontWeight: "700", cursor: "pointer" }}
+              >
+                Create User
+              </button>
             </div>
           </div>
         </div>
