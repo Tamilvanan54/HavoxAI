@@ -51,7 +51,8 @@ export default function SuperAdminPortal() {
   // Drawer Sidebar Open/Close state
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Accordion section states
+  // Accordion & Selection states
+  const [selectedInstitute, setSelectedInstitute] = useState("college"); // "college" or "school"
   const [instituteTypeOpen, setInstituteTypeOpen] = useState(true);
   const [systemOpen, setSystemOpen] = useState(true);
 
@@ -124,16 +125,24 @@ export default function SuperAdminPortal() {
     }
   };
 
-  // Filtered users depending on tab or search
+  // Filtered users depending on tab, search, and college/school selection
   const getFilteredUsersList = (specificRole = null) => {
     return users.filter(u => {
       const matchRole = specificRole
         ? u.role?.toLowerCase() === specificRole.toLowerCase()
         : (roleFilter === "ALL" || u.role?.toLowerCase() === roleFilter.toLowerCase());
+
+      const isSchool = (u.institution?.toLowerCase().includes("school")) ||
+                       (u.department?.startsWith("Class ")) ||
+                       (u.college?.toLowerCase().includes("school"));
+
+      const matchInst = selectedInstitute === "school" ? isSchool : !isSchool;
+
       const matchSearch = u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           u.institution?.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchRole && matchSearch;
+
+      return matchRole && matchSearch && matchInst;
     });
   };
 
@@ -369,16 +378,63 @@ export default function SuperAdminPortal() {
 
             {instituteTypeOpen && (
               <div style={{ padding: "10px", display: "flex", flexDirection: "column", gap: "14px" }}>
+                {/* COLLEGE / SCHOOL SELECTOR BUTTONS */}
+                <div style={{ display: "flex", gap: "6px", background: "rgba(15, 23, 42, 0.6)", padding: "4px", borderRadius: "10px", border: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedInstitute("college")}
+                    style={{
+                      flex: 1,
+                      padding: "8px 6px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: selectedInstitute === "college" ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)" : "transparent",
+                      color: selectedInstitute === "college" ? "white" : "#94a3b8",
+                      fontWeight: "700",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    🎓 College
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedInstitute("school")}
+                    style={{
+                      flex: 1,
+                      padding: "8px 6px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: selectedInstitute === "school" ? "linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)" : "transparent",
+                      color: selectedInstitute === "school" ? "white" : "#94a3b8",
+                      fontWeight: "700",
+                      fontSize: "12px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    🏫 School
+                  </button>
+                </div>
+
                 {/* USER MANAGEMENT */}
                 <div>
                   <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>
-                    User Management
+                    User Management ({selectedInstitute === "college" ? "College" : "School"})
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                     {[
                       { id: "users", label: "Users", icon: <FaUsers /> },
-                      { id: "departments", label: "Departments", icon: <FaBuilding /> },
-                      { id: "faculty", label: "Faculty", icon: <FaUserTie /> },
+                      { id: "departments", label: selectedInstitute === "college" ? "Departments" : "Classes", icon: <FaBuilding /> },
+                      { id: "faculty", label: selectedInstitute === "college" ? "Faculty" : "Teachers", icon: <FaUserTie /> },
                       { id: "students", label: "Students", icon: <FaGraduationCap /> },
                       { id: "admins", label: "Admins", icon: <FaUserShield /> },
                       { id: "roles", label: "Roles & Permissions", icon: <FaShieldAlt /> }
