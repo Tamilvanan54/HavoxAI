@@ -474,7 +474,7 @@ export default function SuperAdminPortal() {
                   <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                     {[
                       { id: "academic_year", label: "Academic Year", icon: <FaCalendarAlt /> },
-                      { id: "semesters", label: "Semesters", icon: <FaBookOpen /> },
+                      { id: "semesters", label: selectedInstitute === "college" ? "Semesters" : "Terms / Standards", icon: <FaBookOpen /> },
                       { id: "subjects", label: "Subjects", icon: <FaBook /> },
                       { id: "materials", label: "Syllabus & Materials", icon: <FaFileAlt /> }
                     ].map(item => (
@@ -503,112 +503,6 @@ export default function SuperAdminPortal() {
                       </button>
                     ))}
                   </div>
-                </div>
-
-                {/* AI MANAGEMENT */}
-                <div>
-                  <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>
-                    AI Management
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                    {[
-                      { id: "ai_models", label: "AI Models", icon: <FaRobot /> },
-                      { id: "rag_vector", label: "RAG & Vector DB", icon: <FaDatabase /> },
-                      { id: "prompts", label: "Prompt Settings", icon: <FaSlidersH /> },
-                      { id: "evaluation", label: "Evaluation", icon: <FaChartBar /> }
-                    ].map(item => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleTabClick(item.id)}
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "8px 10px",
-                          borderRadius: "8px",
-                          border: "none",
-                          background: activeTab === item.id ? "rgba(99, 102, 241, 0.2)" : "transparent",
-                          color: activeTab === item.id ? "#a5b4fc" : "#94a3b8",
-                          fontWeight: activeTab === item.id ? "600" : "400",
-                          fontSize: "12px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          {item.icon} {item.label}
-                        </span>
-                        <FaArrowRight style={{ fontSize: "9px", opacity: activeTab === item.id ? 1 : 0.3 }} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* ANALYTICS */}
-                <div>
-                  <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>
-                    Analytics
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                    {[
-                      { id: "usage_analytics", label: "Usage Analytics", icon: <FaChartLine /> },
-                      { id: "department_reports", label: "Department Reports", icon: <FaFileAlt /> },
-                      { id: "query_analytics", label: "Query Analytics", icon: <FaSearch /> }
-                    ].map(item => (
-                      <button
-                        key={item.id}
-                        onClick={() => handleTabClick(item.id)}
-                        style={{
-                          width: "100%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "8px 10px",
-                          borderRadius: "8px",
-                          border: "none",
-                          background: activeTab === item.id ? "rgba(99, 102, 241, 0.2)" : "transparent",
-                          color: activeTab === item.id ? "#a5b4fc" : "#94a3b8",
-                          fontWeight: activeTab === item.id ? "600" : "400",
-                          fontSize: "12px",
-                          cursor: "pointer"
-                        }}
-                      >
-                        <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          {item.icon} {item.label}
-                        </span>
-                        <FaArrowRight style={{ fontSize: "9px", opacity: activeTab === item.id ? 1 : 0.3 }} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* COMMUNICATION */}
-                <div>
-                  <div style={{ fontSize: "11px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "6px" }}>
-                    Communication
-                  </div>
-                  <button
-                    onClick={() => handleTabClick("announcements")}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "8px 10px",
-                      borderRadius: "8px",
-                      border: "none",
-                      background: activeTab === "announcements" ? "rgba(99, 102, 241, 0.2)" : "transparent",
-                      color: activeTab === "announcements" ? "#a5b4fc" : "#94a3b8",
-                      fontWeight: activeTab === "announcements" ? "600" : "400",
-                      fontSize: "12px",
-                      cursor: "pointer"
-                    }}
-                  >
-                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <FaBullhorn /> Announcements
-                    </span>
-                    <FaArrowRight style={{ fontSize: "9px", opacity: activeTab === "announcements" ? 1 : 0.3 }} />
-                  </button>
                 </div>
               </div>
             )}
