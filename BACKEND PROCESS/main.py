@@ -331,11 +331,12 @@ def superadmin_overview():
                     "type": "School" if ("school" in clg.lower() or (getattr(u, "department", "") or "").startswith("Class ")) else "College"
                 }
             
-            if u.role == "student":
+            r = (u.role or "").lower()
+            if r == "student":
                 inst_map[clg]["students"] += 1
-            elif u.role == "staff":
+            elif r == "staff":
                 inst_map[clg]["staff"] += 1
-            elif u.role == "admin":
+            elif r == "admin":
                 inst_map[clg]["admins"] += 1
             
             u_last = getattr(u, "last_login", None) or getattr(u, "created_at", None)
@@ -356,6 +357,7 @@ def superadmin_overview():
                 "status": "Active",
                 "students": data["students"],
                 "staff": data["staff"],
+                "admins": data["admins"],
                 "lastLogin": data["last_login"] or "Recent"
             })
             idx += 1

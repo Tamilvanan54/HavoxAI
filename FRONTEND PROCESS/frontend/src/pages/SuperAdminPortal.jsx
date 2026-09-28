@@ -346,7 +346,6 @@ export default function SuperAdminPortal() {
                 onError={(e) => { e.target.onerror = null; e.target.style.display = "none"; }}
                 style={{ width: "24px", height: "24px", objectFit: "contain" }}
               />
-              <FaBookOpen style={{ color: "#38bdf8", fontSize: "18px" }} />
             </div>
             <div>
               <div style={{ fontSize: "18px", fontWeight: "900", letterSpacing: "-0.5px", color: "white" }}>HavoxAI</div>
