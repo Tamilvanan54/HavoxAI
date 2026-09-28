@@ -520,7 +520,8 @@ class RAGEngine:
 
         strict_guardrail = """Answer the user's question accurately based ONLY on the provided Context below.
 - Rely ONLY on facts explicitly stated in the Context. Do NOT use outside knowledge or hallucinate.
-- Focus STRICTLY on answering ONLY the specific topic asked in the Question (if the question is a follow-up like 'give it shortly' or 'briefly', answer ONLY for the previous question from history).
+- Focus STRICTLY on answering ONLY the specific topic asked in the Question.
+- Do NOT repeat, include, or combine previous questions or answers from history in your output.
 - Do NOT output or summarize unrelated topics, chapters, or headings found in the Context.
 - Complete your answer fully and clearly. Do NOT stop mid-sentence."""
 

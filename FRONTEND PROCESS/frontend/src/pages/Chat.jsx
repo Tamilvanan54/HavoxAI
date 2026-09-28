@@ -242,7 +242,11 @@ export default function Chat() {
       recentHistory = messages
         .slice(-6)
         .filter((m) => m && m.text && typeof m.text === "string" && !m.text.includes("cannot find information") && !m.text.includes("study materials"))
-        .map((m) => `${(m.sender === "User" || m.sender === "student") ? "User" : "Assistant"}: ${m.text.slice(0, 200)}`)
+        .map((m) => {
+          const isUser = (m.sender === "User" || m.sender === "student" || m.sender === "you");
+          const textSnippet = isUser ? m.text.slice(0, 150) : m.text.slice(0, 50);
+          return `${isUser ? "User" : "Assistant"}: ${textSnippet}`;
+        })
         .join("\n");
     }
 

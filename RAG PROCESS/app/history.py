@@ -36,8 +36,11 @@ def resolve_history_reference(
     # Check for explicit follow-up instruction phrases ('give it shortly', 'give 2 marks', etc.)
     has_followup_phrase = any(phrase in query_lower for phrase in FOLLOWUP_PHRASES)
 
-    # A query is a follow-up ONLY if it has an explicit pronoun OR an explicit follow-up phrase
-    is_followup = has_pronoun or has_followup_phrase
+    # Check if query is a standalone new question (starts with 'what is', 'define', 'explain <topic>', etc.)
+    is_new_question = bool(re.match(r'^(what|who|where|when|why|how|define|describe|explain\s+[a-zA-Z0-9_\s]{3,})\b', query_lower))
+
+    # A query is a follow-up ONLY if it has an explicit pronoun OR an explicit follow-up phrase AND is NOT a new standalone question
+    is_followup = (has_pronoun or (has_followup_phrase and len(words) <= 6)) and not (is_new_question and not has_pronoun)
 
     if not is_followup:
         return query, False, None, None
