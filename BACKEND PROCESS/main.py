@@ -303,6 +303,8 @@ def users(college: str | None = None):
 
 @app.get("/superadmin-overview")
 def superadmin_overview():
+    from database.connection import SessionLocal
+    from database.models import User
     db = SessionLocal()
     try:
         all_users = db.query(User).all()
