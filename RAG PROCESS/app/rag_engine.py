@@ -790,7 +790,7 @@ Answer:"""
             yield f'event: meta\ndata: {{"corrected_query": "{corrected_query}", "display_note": "{display_note}"}}\n\n'
 
         # Step 4: Resolve chat history references
-        search_query, is_unclear_ref, ref_reason, ref_clarification = resolve_history_reference(corrected_query, history)
+        search_query, is_unclear_ref, ref_reason, ref_clarification, is_followup = resolve_history_reference(corrected_query, history)
         if is_unclear_ref and ref_clarification:
             yield f'event: final\ndata: {{"answer": "{ref_clarification}", "sources": [], "confidence": "clarification_needed", "refusal_reason": "{ref_reason}", "corrected_query": null, "timing_ms": {{"total": {round((time.time() - t_start) * 1000, 2)}}}}}\n\n'
             return
@@ -839,7 +839,8 @@ Answer:"""
         yield f'event: meta\ndata: {{"sources": {json.dumps(sources_metadata)}, "corrected_query": {json.dumps(corrected_query if display_note else None)}}}\n\n'
 
         # Step 7: Build prompt and stream LLM tokens
-        history_str = history if isinstance(history, str) else ""
+        # Only pass history to prompt if query was explicitly a follow-up (e.g. 'shortly', '2 mark', '16 mark', 'it')
+        history_str = (history if isinstance(history, str) else "") if is_followup else ""
         formatted_prompt = self._build_prompt(corrected_query, context_text, history=history_str)
 
         # Dynamic Ollama options based on mark level to allow long 16-mark / 10-mark answers

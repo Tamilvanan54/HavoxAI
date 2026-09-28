@@ -4,10 +4,11 @@ REFERENCE_PRONOUNS = {"it", "its", "that", "their", "this", "them", "these", "th
 
 FOLLOWUP_PHRASES = [
     "give it shortly", "give shortly", "in short", "make it short", "make short",
-    "explain shortly", "tell shortly", "give brief", "briefly", "short answer",
+    "explain shortly", "tell shortly", "give brief", "briefly", "short answer", "shortly",
     "give 1 mark", "give 2 marks", "give 3 marks", "give 5 marks", "give 7 marks",
     "give 8 marks", "give 10 marks", "give 12 marks", "give 14 marks", "give 16 marks",
     "1 mark", "2 mark", "5 mark", "7 mark", "10 mark", "16 mark",
+    "1 marks", "2 marks", "5 marks", "7 marks", "10 marks", "16 marks",
     "give its usage", "give its usages", "how it works", "how does it work",
     "explain step 2", "give more details", "tell me more", "what about it",
     "its applications", "usages of it", "give 3 examples", "what is its domain",
@@ -17,14 +18,14 @@ FOLLOWUP_PHRASES = [
 def resolve_history_reference(
     query: str,
     history: str | list | None
-) -> tuple[str, bool, str | None, str | None]:
+) -> tuple[str, bool, str | None, str | None, bool]:
     """
     Resolve references like 'it', 'its', 'give it shortly', 'give 2 marks' using chat history.
     Does NOT affect new standalone questions (e.g. 'what is subnetting', 'what is routing').
-    Returns: (search_query, is_unclear, refusal_type, clarification_message)
+    Returns: (search_query, is_unclear, refusal_type, clarification_message, is_followup)
     """
     if not query:
-        return query, False, None, None
+        return query, False, None, None, False
 
     query_lower = query.lower().strip()
     tokens = re.findall(r'\b[a-zA-Z0-9_-]+\b', query_lower)
@@ -43,7 +44,7 @@ def resolve_history_reference(
     is_followup = (has_pronoun or (has_followup_phrase and len(words) <= 6)) and not (is_new_question and not has_pronoun)
 
     if not is_followup:
-        return query, False, None, None
+        return query, False, None, None, False
 
     # Format history turns into list of strings
     history_lines = []
@@ -75,8 +76,8 @@ def resolve_history_reference(
     if is_followup and not user_questions:
         if has_pronoun or "its" in query_lower or "it" in words:
             refusal_msg = 'Could you clarify what topic you are referring to? I can then search the uploaded materials for the correct topic.'
-            return query, True, "unclear_reference", refusal_msg
-        return query, False, None, None
+            return query, True, "unclear_reference", refusal_msg, True
+        return query, False, None, None, False
 
     # If previous user topic exists:
     if user_questions:
@@ -85,6 +86,6 @@ def resolve_history_reference(
         if last_user_q.lower() != query_lower:
             search_query = f"{last_user_q} {query}"
             print(f"🔄 [HISTORY RESOLUTION] Follow-up query resolved: '{query}' -> '{search_query}' (Topic: '{last_user_q}')")
-            return search_query, False, None, None
+            return search_query, False, None, None, True
 
-    return query, False, None, None
+    return query, False, None, None, False

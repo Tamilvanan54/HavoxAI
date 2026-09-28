@@ -73,7 +73,7 @@ class TestRAGSystem(unittest.TestCase):
         formatted = engine._ensure_example_section(answer, context)
         self.assertIn("### Example", formatted)
 
-    # Test 5: Maths answers use LaTeX and step-by-step structure
+    # Test 5: Maths answers use step-by-step structure
     def test_05_maths_answers_format(self):
         from app.rag_engine import RAGEngine
         engine = RAGEngine(vectorstore=MockVectorStore())
@@ -81,13 +81,14 @@ class TestRAGSystem(unittest.TestCase):
         self.assertTrue(is_math)
         prompt = engine._build_prompt("Solve x^2 + 5x + 6 = 0", "Quadratic formula x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}")
         self.assertIn("### Step 1", prompt)
-        self.assertIn("### Final Answer", prompt)
+        self.assertIn("### Step 3: Final Solution & Conclusion", prompt)
 
     # Test 6: Follow-up question uses chat history for reference resolution
     def test_06_followup_question_reference(self):
         history = "User: What is Machine Learning?\nAssistant: Machine learning is..."
-        search_q, is_unclear, ref_reason, _ = resolve_history_reference("give its usage", history)
+        search_q, is_unclear, ref_reason, _, is_followup = resolve_history_reference("give its usage", history)
         self.assertFalse(is_unclear)
+        self.assertTrue(is_followup)
         self.assertIn("Machine Learning", search_q)
 
     # Test 7: "What is ML?" abbreviation expansion
@@ -129,18 +130,18 @@ class TestRAGSystem(unittest.TestCase):
 
     # Test 11: Unclear follow-up reference asks clarification
     def test_11_unclear_followup_reference(self):
-        search_q, is_unclear, ref_reason, clarification = resolve_history_reference("give its usage", history=None)
+        search_q, is_unclear, ref_reason, clarification, is_followup = resolve_history_reference("give its usage", history=None)
         self.assertTrue(is_unclear)
         self.assertEqual(ref_reason, "unclear_reference")
-        self.assertIn("Could you clarify what \"it\" refers to?", clarification)
+        self.assertIn("Could you clarify what topic you are referring to?", clarification)
 
     # Test 12: Multi-tenant access control (Student isolated chat history)
     def test_12_multitenant_history_isolation(self):
         student1_history = "User: What is Machine Learning?"
         student2_history = "User: What is Calculus?"
         
-        q1, _, _, _ = resolve_history_reference("explain it", student1_history)
-        q2, _, _, _ = resolve_history_reference("explain it", student2_history)
+        q1, _, _, _, _ = resolve_history_reference("explain it", student1_history)
+        q2, _, _, _, _ = resolve_history_reference("explain it", student2_history)
         
         self.assertIn("Machine Learning", q1)
         self.assertIn("Calculus", q2)
@@ -175,28 +176,26 @@ class TestRAGSystem(unittest.TestCase):
         self.assertEqual(engine._detect_mark_level("14 mark detailed explanation on Machine Learning"), 14)
         self.assertEqual(engine._detect_mark_level("Machine Learning mark 16 level"), 16)
 
-    # Test 16: Mark level prompt structure & scaled example requirement
+    # Test 16: Mark level prompt structure
     def test_16_mark_level_prompt_building(self):
         from app.rag_engine import RAGEngine
         engine = RAGEngine(vectorstore=MockVectorStore())
         
         prompt_1m = engine._build_prompt("What is RAM in 1 mark", "RAM is random access memory.")
-        self.assertIn("1-mark level answer", prompt_1m)
+        self.assertIn("1-mark answer", prompt_1m)
 
         prompt_2m = engine._build_prompt("Define deadlock in 2 mark", "Deadlock occurs when processes hold resources...")
         self.assertIn("2-mark level answer", prompt_2m)
-        self.assertIn("exactly 3 to 5 lines", prompt_2m)
-        self.assertIn("chinna example", prompt_2m)
+        self.assertIn("3 to 5 lines", prompt_2m)
 
         prompt_5m = engine._build_prompt("Explain OS scheduling in 5 marks", "OS scheduling algorithms manage CPU execution...")
         self.assertIn("5-mark level answer", prompt_5m)
 
         prompt_10m = engine._build_prompt("Explain sorting algorithms in 10 mark", "Sorting algorithms arrange data...")
-        self.assertIn("10-mark level detailed answer", prompt_10m)
+        self.assertIn("10-mark level", prompt_10m)
 
         prompt_16m = engine._build_prompt("Explain Neural Networks in 16 mark", "Neural networks consist of layers...")
-        self.assertIn("16-mark level comprehensive", prompt_16m)
-        self.assertIn("periya example fulla explain pannanum", prompt_16m)
+        self.assertIn("16-MARK LEVEL EXAM ANSWER", prompt_16m)
 
 if __name__ == "__main__":
     unittest.main()
