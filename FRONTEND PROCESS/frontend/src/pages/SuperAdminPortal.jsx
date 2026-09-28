@@ -59,13 +59,6 @@ export default function SuperAdminPortal() {
     total_users: 0
   });
 
-  // Modal states
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserRole, setNewUserRole] = useState("student");
-  const [newUserCollege, setNewUserCollege] = useState("");
-
   useEffect(() => {
     const role = (localStorage.getItem("role") || "").toLowerCase();
     if (role !== "superadmin") {
@@ -797,12 +790,6 @@ export default function SuperAdminPortal() {
                     </div>
                   )}
                 </div>
-                <button
-                  onClick={() => setShowAddUserModal(true)}
-                  style={{ background: "#6366f1", color: "white", border: "none", padding: "10px 18px", borderRadius: "10px", fontWeight: "600", fontSize: "13px", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <FaPlus /> Add New User
-                </button>
               </div>
 
               {/* Stats */}
@@ -1014,57 +1001,6 @@ export default function SuperAdminPortal() {
           </div>
         )}
       </div>
-
-      {/* ====== ADD USER MODAL ====== */}
-      {showAddUserModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 9999 }}>
-          <div style={{ background: "#111827", border: "1px solid rgba(255,255,255,0.1)", padding: "30px", borderRadius: "20px", width: "420px" }}>
-            <h3 style={{ margin: "0 0 16px 0", color: "#818cf8" }}>Add New User</h3>
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={newUserName}
-              onChange={(e) => setNewUserName(e.target.value)}
-              style={{ width: "100%", padding: "12px", marginBottom: "12px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", boxSizing: "border-box" }}
-            />
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={newUserEmail}
-              onChange={(e) => setNewUserEmail(e.target.value)}
-              style={{ width: "100%", padding: "12px", marginBottom: "12px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", boxSizing: "border-box" }}
-            />
-            <input
-              type="text"
-              placeholder="College / School Name"
-              value={newUserCollege}
-              onChange={(e) => setNewUserCollege(e.target.value)}
-              style={{ width: "100%", padding: "12px", marginBottom: "12px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", boxSizing: "border-box" }}
-            />
-            <select
-              value={newUserRole}
-              onChange={(e) => setNewUserRole(e.target.value)}
-              style={{ width: "100%", padding: "12px", marginBottom: "20px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "white", boxSizing: "border-box" }}
-            >
-              <option value="student">Student</option>
-              <option value="staff">Staff / Faculty</option>
-              <option value="admin">Admin</option>
-            </select>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => setShowAddUserModal(false)} style={{ flex: 1, padding: "10px", background: "#334155", color: "white", border: "none", borderRadius: "10px", cursor: "pointer" }}>Cancel</button>
-              <button
-                onClick={() => {
-                  alert(`User '${newUserName}' created!`);
-                  setShowAddUserModal(false);
-                }}
-                style={{ flex: 1, padding: "10px", background: "#6366f1", color: "white", border: "none", borderRadius: "10px", fontWeight: "700", cursor: "pointer" }}
-              >
-                Create User
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
