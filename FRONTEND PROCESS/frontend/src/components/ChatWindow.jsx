@@ -67,12 +67,17 @@ const formatMathText = (text) => {
   // Remove lines that consist only of leftover brackets, slashes or whitespace
   formatted = formatted.split("\n").filter(line => !/^\s*[\\[\\]()\/]+\s*$/.test(line)).join("\n");
 
-  // 4. Convert LaTeX fractions and square roots to clean readable notation
+  // 4. Convert LaTeX fractions, square roots, trig & superscript notation
   formatted = formatted.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1)/($2)");
   formatted = formatted.replace(/\\sqrt\{([^}]+)\}/g, "√($1)");
   formatted = formatted.replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, "√$1");
   formatted = formatted.replace(/\\text\{([^}]+)\}/g, "$1");
   formatted = formatted.replace(/\\mathrm\{([^}]+)\}/g, "$1");
+  formatted = formatted.replace(/\\left\s*/g, "");
+  formatted = formatted.replace(/\\right\s*/g, "");
+  formatted = formatted.replace(/\\quad|\\qquad|\\;|\\,|\\:/g, " ");
+  formatted = formatted.replace(/f\^\{-1\}/g, "f⁻¹");
+  formatted = formatted.replace(/f\^-1/g, "f⁻¹");
 
   // 5. Convert comprehensive set theory, calculus, logic & algebraic symbols to Unicode safely using negative lookaheads (?![a-zA-Z])
   formatted = formatted
@@ -102,6 +107,10 @@ const formatMathText = (text) => {
     .replace(/\\ge(?![a-zA-Z])/g, "≥")
     .replace(/\\le(?![a-zA-Z])/g, "≤")
     .replace(/\\neq(?![a-zA-Z])/g, "≠")
+    .replace(/\\implies(?![a-zA-Z])/g, " ⇒ ")
+    .replace(/\\impliedby(?![a-zA-Z])/g, " ⇐ ")
+    .replace(/\\therefore(?![a-zA-Z])/g, "\n\n∴ Therefore, ")
+    .replace(/\\because(?![a-zA-Z])/g, " ∵ ")
     .replace(/\\to(?![a-zA-Z])|\\rightarrow(?![a-zA-Z])/g, "→")
     .replace(/\\Rightarrow(?![a-zA-Z])/g, "⇒")
     .replace(/\\Leftrightarrow(?![a-zA-Z])/g, "⇔")
@@ -117,15 +126,27 @@ const formatMathText = (text) => {
     .replace(/\\sum(?![a-zA-Z])/g, "∑")
     .replace(/\\prod(?![a-zA-Z])/g, "∏")
     .replace(/\\int(?![a-zA-Z])/g, "∫")
+    .replace(/\\arcsin(?![a-zA-Z])/g, "arcsin")
+    .replace(/\\arccos(?![a-zA-Z])/g, "arccos")
+    .replace(/\\arctan(?![a-zA-Z])/g, "arctan")
     .replace(/\\sin(?![a-zA-Z])/g, "sin")
     .replace(/\\cos(?![a-zA-Z])/g, "cos")
     .replace(/\\tan(?![a-zA-Z])/g, "tan")
+    .replace(/\\sec(?![a-zA-Z])/g, "sec")
+    .replace(/\\csc(?![a-zA-Z])/g, "csc")
+    .replace(/\\cot(?![a-zA-Z])/g, "cot")
+    .replace(/\\ln(?![a-zA-Z])/g, "ln")
+    .replace(/\\log(?![a-zA-Z])/g, "log")
     .replace(/\^2/g, "²")
     .replace(/\^3/g, "³")
     .replace(/\^4/g, "⁴")
     .replace(/\^n/g, "ⁿ");
 
-  // 6. Force step headings and Example onto separate lines with clean spacing
+  // 6. Strip any remaining stray backslashes before English words (e.g. \we -> we, \with -> with)
+  formatted = formatted.replace(/\\([a-zA-Z]{2,})/g, "$1");
+  formatted = formatted.replace(/\s*\\\s*/g, " ");
+
+  // 7. Force step headings and Example onto separate lines with clean spacing
   formatted = formatted.replace(/([^\n])\s*(###?\s*Step|\bStep\s+\d+:)/g, "$1\n\n$2");
   formatted = formatted.replace(/([^\n])\s*(###?\s*Final Answer:|\bFinal Answer:)/g, "$1\n\n$2");
 

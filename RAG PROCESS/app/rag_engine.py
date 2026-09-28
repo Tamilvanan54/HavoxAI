@@ -675,7 +675,7 @@ Format your output EXACTLY as follows:
 [State the exact final conclusion and mathematical answer clearly]
 
 ### Example
-Use clean standard mathematical symbols (e.g. $A \\cap B$, $A \\cup B$, $y = \\sqrt{{5 - x}} - x$). Do NOT output raw bracket delimiters like \\[, \\], \\(, or \\).
+Format all equations and explanations step-by-step using plain readable text and standard math symbols (e.g. sin(x), arcsin(y), f⁻¹(x), π ≤ x ≤ 2π). Do NOT write raw LaTeX backslashes (\) or commands like \sin, \in, \we, \frac, \left, \right.
 
 Solution:"""
 
