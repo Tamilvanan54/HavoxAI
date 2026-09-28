@@ -54,32 +54,45 @@ const formatMathText = (text) => {
   formatted = formatted.replace(/(?:\n|^)data:\s*\{.*?\}/gis, "");
   formatted = formatted.replace(/^event:.*$/gm, "");
 
-  // 2. Deduplicate any repeated ### Example headings
+  // 2. Strip code block wrappers like ```plaintext or ```
+  formatted = formatted.replace(/```\s*plaintext\s*/gi, "");
+  formatted = formatted.replace(/```\s*/g, "");
+
+  // 3. Deduplicate any repeated ### Example headings
   formatted = formatted.replace(/(?:\n*\s*###?\s*(?:Example|[A-Za-z0-9_\s]*Example):?\s*)+/gi, "\n\n### Example\n");
 
-  // 3. Remove raw LaTeX bracket delimiters \( \), \[ \], \\( \\), \\[ \\]
+  // 4. Remove raw LaTeX bracket delimiters \( \), \[ \], \\( \\), \\[ \\]
   formatted = formatted.replace(/\\\[\s*/g, "").replace(/\s*\\\]/g, "");
   formatted = formatted.replace(/\\\(\s*/g, "").replace(/\s*\\\)/g, "");
   formatted = formatted.replace(/\\\[/g, "").replace(/\\\]/g, "");
   formatted = formatted.replace(/\\\(/g, "").replace(/\\\)/g, "");
   formatted = formatted.replace(/\[\s*\]/g, "");
+  formatted = formatted.replace(/\\left\s*/gi, "");
+  formatted = formatted.replace(/\\right\s*/gi, "");
+  formatted = formatted.replace(/\\quad|\\qquad|\\;|\\,|\\:/g, " ");
 
   // Remove lines that consist only of leftover brackets, slashes or whitespace
   formatted = formatted.split("\n").filter(line => !/^\s*[\\[\\]()\/]+\s*$/.test(line)).join("\n");
 
-  // 4. Convert LaTeX fractions, square roots, trig & superscript notation
-  formatted = formatted.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1)/($2)");
-  formatted = formatted.replace(/\\sqrt\{([^}]+)\}/g, "√($1)");
-  formatted = formatted.replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, "√$1");
+  // 5. Convert square root variations FIRST (curly braces, round brackets, bare numbers)
+  formatted = formatted.replace(/\\?sqrt\{([^}]+)\}/gi, "√($1)");
+  formatted = formatted.replace(/\\?sqrt\(([^)]+)\)/gi, "√($1)");
+  formatted = formatted.replace(/\\?sqrt\s*([a-zA-Z0-9]+)/gi, "√$1");
+
+  // 6. Convert fraction variations (with/without backslash, curly/round/mixed brackets)
+  formatted = formatted.replace(/\\?frac\{([^}]+)\}\{([^}]+)\}/gi, "$1/$2");
+  formatted = formatted.replace(/\\?frac\{([^}]+)\}\(([^)]+)\)/gi, "$1/$2");
+  formatted = formatted.replace(/\\?frac\(([^)]+)\)\{([^}]+)\}/gi, "$1/$2");
+  formatted = formatted.replace(/\\?frac\(([^)]+)\)\(([^)]+)\)/gi, "$1/$2");
+  formatted = formatted.replace(/\\?frac\{([^}]+)\}\s*([0-9a-zA-Z]+)/gi, "$1/$2");
+
+  // 7. Convert function superscripts, text wrappers & subscripts
   formatted = formatted.replace(/\\text\{([^}]+)\}/g, "$1");
   formatted = formatted.replace(/\\mathrm\{([^}]+)\}/g, "$1");
-  formatted = formatted.replace(/\\left\s*/g, "");
-  formatted = formatted.replace(/\\right\s*/g, "");
-  formatted = formatted.replace(/\\quad|\\qquad|\\;|\\,|\\:/g, " ");
-  formatted = formatted.replace(/f\^\{-1\}/g, "f⁻¹");
-  formatted = formatted.replace(/f\^-1/g, "f⁻¹");
+  formatted = formatted.replace(/f\^\{-1\}/gi, "f⁻¹");
+  formatted = formatted.replace(/f\^-1/gi, "f⁻¹");
 
-  // 5. Convert comprehensive set theory, calculus, logic & algebraic symbols to Unicode safely using negative lookaheads (?![a-zA-Z])
+  // 8. Convert comprehensive set theory, calculus, logic & algebraic symbols to Unicode safely using negative lookaheads (?![a-zA-Z])
   formatted = formatted
     .replace(/\\cap(?![a-zA-Z])/g, "∩")
     .replace(/\\cup(?![a-zA-Z])/g, "∪")
@@ -93,7 +106,6 @@ const formatMathText = (text) => {
     .replace(/\\approx(?![a-zA-Z])/g, "≈")
     .replace(/\\pm(?![a-zA-Z])/g, "±")
     .replace(/\\mp(?![a-zA-Z])/g, "∓")
-    .replace(/\\sqrt(?![a-zA-Z])/g, "√")
     .replace(/\\infty(?![a-zA-Z])/g, "∞")
     .replace(/\\mathbb\{R\}/g, "ℝ")
     .replace(/\\mathbb\{N\}/g, "ℕ")
@@ -142,11 +154,11 @@ const formatMathText = (text) => {
     .replace(/\^4/g, "⁴")
     .replace(/\^n/g, "ⁿ");
 
-  // 6. Strip any remaining stray backslashes before English words (e.g. \we -> we, \with -> with)
+  // 9. Strip any remaining stray backslashes before English words (e.g. \we -> we, \with -> with)
   formatted = formatted.replace(/\\([a-zA-Z]{2,})/g, "$1");
   formatted = formatted.replace(/\s*\\\s*/g, " ");
 
-  // 7. Force step headings and Example onto separate lines with clean spacing
+  // 10. Force step headings and Example onto separate lines with clean spacing
   formatted = formatted.replace(/([^\n])\s*(###?\s*Step|\bStep\s+\d+:)/g, "$1\n\n$2");
   formatted = formatted.replace(/([^\n])\s*(###?\s*Final Answer:|\bFinal Answer:)/g, "$1\n\n$2");
 
