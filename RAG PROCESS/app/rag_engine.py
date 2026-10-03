@@ -126,8 +126,8 @@ class RAGEngine:
         self.options = {
             "num_gpu": 0,
             "temperature": 0.0,
-            "num_predict": 300,
-            "num_ctx": 1024,
+            "num_predict": 1200,
+            "num_ctx": 3072,
             "num_thread": 8,
             "repeat_penalty": 1.05,
             "top_k": 5,
@@ -179,8 +179,8 @@ class RAGEngine:
 
         print(f"[RAG] Binding LLM model: '{target_model}'")
         fast_options = dict(self.options)
-        fast_options["num_ctx"] = 2048
-        fast_options["num_predict"] = 512
+        fast_options["num_ctx"] = 3072
+        fast_options["num_predict"] = 1200
         fast_options["temperature"] = 0.0
         fast_options["top_k"] = 5
         fast_options["top_p"] = 0.5
@@ -503,7 +503,7 @@ class RAGEngine:
                 else:
                     context_limit = 1400 if is_math else 1200
             else:
-                context_limit = 1400 if is_math else 1200
+                context_limit = 2000 if is_math else 1800
 
             context_text = "\n\n".join([doc.page_content for doc in valid_docs])[:context_limit]
             return context_text, valid_docs, sources_metadata
@@ -844,7 +844,7 @@ Answer:"""
         formatted_prompt = self._build_prompt(corrected_query, context_text, history=history_str)
 
         # Dynamic Ollama options based on mark level to allow long 16-mark / 10-mark answers
-        dyn_predict = 1000
+        dyn_predict = 1500
         dyn_ctx = 4096
         if mark_lvl is not None:
             if mark_lvl >= 11:
